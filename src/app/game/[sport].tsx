@@ -1,5 +1,4 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { OrientationLock } from 'expo-screen-orientation';
 import { useReducer } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,7 +6,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TeamPanel } from '@/components/team-panel';
 import { getSport } from '@/constants/sports';
 import { CardShadow, Spacing } from '@/constants/theme';
-import { useOrientationLock } from '@/hooks/use-orientation';
 import { useTheme } from '@/hooks/use-theme';
 import { gameReducer, initialGame } from '@/lib/game';
 
@@ -18,7 +16,6 @@ export default function GameScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [game, dispatch] = useReducer(gameReducer, initialGame);
-  useOrientationLock(OrientationLock.LANDSCAPE);
 
   if (!sport) {
     return (
@@ -34,7 +31,9 @@ export default function GameScreen() {
         styles.screen,
         {
           backgroundColor: c.background,
-          paddingTop: insets.top + Spacing.sm,
+          // In landscape the notch moves to the side, so insets.top is ~0 and the back button
+          // ends up jammed against the top edge. Keep a floor under it.
+          paddingTop: Math.max(insets.top, Spacing.md) + Spacing.sm,
           paddingBottom: insets.bottom + Spacing.sm,
           paddingLeft: insets.left + Spacing.md,
           paddingRight: insets.right + Spacing.md,
@@ -43,7 +42,7 @@ export default function GameScreen() {
       <Stack.Screen options={{ title: sport.name, headerShown: false }} />
 
       <View style={styles.topBar}>
-        <Pressable style={[styles.backBtn, CardShadow, { backgroundColor: c.card }]} onPress={() => router.back()} hitSlop={8}>
+        <Pressable style={[styles.backBtn, CardShadow, { backgroundColor: c.card }]} onPress={() => router.back()} hitSlop={12}>
           <Text style={[styles.backText, { color: c.text }]}>‹ Sports</Text>
         </Pressable>
         <Text style={[styles.title, { color: c.textSecondary }]}>{sport.name}</Text>
@@ -89,7 +88,7 @@ export default function GameScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, gap: Spacing.sm },
   topBar: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  backBtn: { paddingVertical: Spacing.xs, paddingHorizontal: Spacing.md, borderRadius: 999 },
+  backBtn: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.lg, borderRadius: 999 },
   backText: { fontSize: 15, fontWeight: '700' },
   title: { fontSize: 15, fontWeight: '600' },
   teams: { flex: 1, flexDirection: 'row', gap: Spacing.md },
