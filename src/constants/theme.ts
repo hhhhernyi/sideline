@@ -5,6 +5,8 @@ export const Colors = {
   textSecondary: '#7A7E88',
   background: '#FAF7F2', // warm off-white
   card: '#FFFFFF',
+  header: '#EFE7D8', // solid sand band behind screen titles
+  headerBorder: '#E1D6C0',
   cardPressed: '#F3EFE8',
   home: '#7FA8E8', // pastel blue
   away: '#F09A9A', // pastel red

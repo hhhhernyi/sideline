@@ -1,9 +1,15 @@
-export type SportId = 'soccer' | 'basketball' | 'volleyball';
+import type { ComponentProps } from 'react';
+import type MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+
+export type SportId = 'soccer' | 'volleyball';
+
+/** Any glyph name from the MaterialCommunityIcons set. */
+export type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
 export type Sport = {
   id: SportId;
   name: string;
-  emoji: string;
+  icon: IconName;
   /** Pastel tint used behind the icon on the picker card. */
   tint: string;
   /** Point values offered as score buttons, e.g. [1, 2, 3] for basketball. */
@@ -15,9 +21,8 @@ export type Sport = {
 };
 
 export const SPORTS: Sport[] = [
-  { id: 'soccer', name: 'Soccer', emoji: '⚽', tint: '#CBE8C4', increments: [1], periodLabel: 'Half', periods: 2 },
-  { id: 'basketball', name: 'Basketball', emoji: '🏀', tint: '#FFD6B8', increments: [1, 2, 3], periodLabel: 'Quarter', periods: 4 },
-  { id: 'volleyball', name: 'Volleyball', emoji: '🏐', tint: '#FFEDA8', increments: [1], periodLabel: 'Set', periods: 5 },
+  { id: 'soccer', name: 'Soccer', icon: 'soccer', tint: '#D2EBDA', increments: [1], periodLabel: 'Half', periods: 2 },
+  { id: 'volleyball', name: 'Volleyball', icon: 'volleyball', tint: '#FAE7BE', increments: [1], periodLabel: 'Set', periods: 5 },
 ];
 
 export function getSport(id: string | undefined): Sport | undefined {
