@@ -38,18 +38,37 @@ them.
 If rejected, the likeliest causes are the listing name being read as descriptive text or a query
 about the privacy URL. Both are metadata fixes — resubmit without a new build.
 
-## Release: Google Play (paused)
+## Release: Google Play (not started)
 
-An Android production build and its keystore already exist on EAS. Paused because the only test
-device is an iPhone.
+An Android production build and its keystore already exist on EAS from 11 Sep, but they predate
+everything in this session — the artwork, the whistle, haptics, win rules. Rebuild rather than
+reuse. The delay is not the build: a personal Play account opened after Nov 2023 needs **12
+testers running a closed test for 14 continuous days** before production is unlocked, so start
+that clock early even if the listing is not finished.
 
-- [ ] Create the app in Play Console (the API cannot create a listing; the first upload must be
-      done by hand through the console)
-- [ ] Testing → Internal testing → new release → upload the `.aab`
-- [ ] Add testers, share the opt-in link
-- [ ] Before production: content rating, data safety (nothing is collected), screenshots
-- [ ] Note: personal Play accounts created after Nov 2023 need 12 testers for 14 continuous days
-      of closed testing before production. Internal testing is not gated on this.
+Android also needs its own pass on two things iOS never exercised: `expo-audio` playing with the
+phone on silent, and `expo-haptics`, which is a no-op on some devices.
+
+- [ ] **Create the app in Play Console by hand.** The API cannot create a listing, and the first
+      upload must go through the console UI. https://play.google.com/console
+- [ ] **Build the AAB:** `npx eas-cli@latest build --platform android --profile production`
+      (`production` has `autoIncrement`, so versionCode looks after itself)
+- [ ] **Testing → Internal testing → Create new release**, upload the `.aab`, add yourself
+- [ ] Install from the opt-in link and check the whistle on silent, haptics, and that the
+      landscape lock holds on an Android device
+- [ ] **Testing → Closed testing**, recruit 12 testers, and leave it running 14 continuous days.
+      The count and the clock both reset if testers drop below 12 — this is the long pole.
+- [ ] **Store listing:** name, short description (80 chars), full description (4000), feature
+      graphic **1024x500** (Play requires this and the App Store has no equivalent, so it has to
+      be made from scratch), phone screenshots (min 2, landscape is fine)
+- [ ] **Content rating** questionnaire — answer honestly, it will come out "Everyone"
+- [ ] **Data safety** — no data collected, no data shared. Mirrors the App Store answer and the
+      same privacy URL works: https://hhhhernyi.github.io/scoreboard-privacy/
+- [ ] **Ads: none.** Declare it, or the listing is flagged later
+- [ ] Once closed testing has run its 14 days: **Production → Create new release**, roll out
+
+Submission from the CLI is possible afterwards with `eas submit --platform android`, but it needs
+a Google Service Account JSON key set up first — worth doing once the listing exists, not before.
 
 ## App
 
