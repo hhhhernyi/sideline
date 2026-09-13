@@ -47,54 +47,58 @@ export default function GameScreen() {
   }
 
   return (
-    <View
-      style={[
-        styles.screen,
-        {
-          backgroundColor: c.background,
-          // In landscape the notch moves to the side, so insets.top is ~0 and the top bar
-          // ends up jammed against the top edge. Keep a floor under it.
-          paddingTop: Math.max(insets.top, Spacing.md) + Spacing.sm,
-          paddingBottom: insets.bottom + Spacing.sm,
-          paddingLeft: insets.left + Spacing.md,
-          paddingRight: insets.right + Spacing.md,
-        },
-      ]}>
-      <View style={styles.topBar}>
-        <Pressable
-          style={[styles.navBtn, CardShadow, { backgroundColor: c.card }]}
-          onPress={() => router.back()}
-          hitSlop={12}>
-          <Text style={[styles.navText, { color: c.text }]}>‹ Sports</Text>
-        </Pressable>
-        <Text style={[styles.title, { color: c.textSecondary }]}>{sport.name}</Text>
-        <Pressable
-          style={[styles.iconBtn, CardShadow, { backgroundColor: c.accent }]}
-          onPress={blowWhistle}
-          hitSlop={12}>
-          <MaterialCommunityIcons name="whistle" size={24} color={c.text} />
-        </Pressable>
-        <Pressable
-          style={[styles.navBtn, CardShadow, { backgroundColor: c.card }]}
-          onPress={() => dispatch({ type: 'reset' })}
-          hitSlop={12}>
-          <Text style={[styles.navText, { color: c.text }]}>Reset</Text>
-        </Pressable>
-      </View>
+    // The picker overlay is a sibling of the padded content so it can cover the full screen,
+    // including the safe-area padding - absolute children are laid out inside the padding box.
+    <View style={[styles.root, { backgroundColor: c.background }]}>
+      <View
+        style={[
+          styles.screen,
+          {
+            // In landscape the notch moves to the side, so insets.top is ~0 and the top bar
+            // ends up jammed against the top edge. Keep a floor under it.
+            paddingTop: Math.max(insets.top, Spacing.md) + Spacing.sm,
+            paddingBottom: insets.bottom + Spacing.sm,
+            paddingLeft: insets.left + Spacing.md,
+            paddingRight: insets.right + Spacing.md,
+          },
+        ]}>
+        <View style={styles.topBar}>
+          <Pressable
+            style={[styles.navBtn, CardShadow, { backgroundColor: c.card }]}
+            onPress={() => router.back()}
+            hitSlop={12}>
+            <Text style={[styles.navText, { color: c.text }]}>‹ Sports</Text>
+          </Pressable>
+          <Text style={[styles.title, { color: c.textSecondary }]}>{sport.name}</Text>
+          <Pressable
+            style={[styles.iconBtn, CardShadow, { backgroundColor: c.accent }]}
+            onPress={blowWhistle}
+            hitSlop={12}>
+            <MaterialCommunityIcons name="whistle" size={24} color={c.text} />
+          </Pressable>
+          <Pressable
+            style={[styles.navBtn, CardShadow, { backgroundColor: c.card }]}
+            onPress={() => dispatch({ type: 'reset' })}
+            hitSlop={12}>
+            <Text style={[styles.navText, { color: c.text }]}>Reset</Text>
+          </Pressable>
+        </View>
 
-      <View style={styles.teams}>
-        {(['home', 'away'] as const).map((team) => (
-          <TeamPanel
-            key={team}
-            name={teams[team].name}
-            onNameChange={(name) => editTeam(team, { name })}
-            score={game[team]}
-            color={teams[team].color}
-            onPickColor={() => setPicking(team)}
-            increments={sport.increments}
-            onScore={(delta) => dispatch({ type: 'score', team, delta })}
-          />
-        ))}
+        <View style={styles.teams}>
+          {(['home', 'away'] as const).map((team) => (
+            <TeamPanel
+              key={team}
+              name={teams[team].name}
+              onNameChange={(name) => editTeam(team, { name })}
+              score={game[team]}
+              color={teams[team].color}
+              onPickColor={() => setPicking(team)}
+              increments={sport.increments}
+              onScore={(delta) => dispatch({ type: 'score', team, delta })}
+            />
+          ))}
+        </View>
+
       </View>
 
       <ColorPicker
@@ -112,6 +116,7 @@ export default function GameScreen() {
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   screen: { flex: 1, gap: Spacing.sm },
   topBar: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   navBtn: {

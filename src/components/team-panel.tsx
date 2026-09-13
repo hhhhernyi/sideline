@@ -25,17 +25,21 @@ export function TeamPanel({
   return (
     <View style={[styles.panel, CardShadow, { backgroundColor: color }]}>
       <View style={styles.header}>
+        {/* Balances the palette button so the name centres on the panel, not on what is left. */}
+        <View style={styles.headerSpacer} />
         <TextInput
           value={name}
-          onChangeText={onNameChange}
+          onChangeText={(text) => onNameChange(text.replace(/\n/g, ''))}
           style={styles.name}
-          maxLength={14}
+          maxLength={24}
+          multiline
           selectTextOnFocus
+          autoCapitalize="characters"
+          submitBehavior="blurAndSubmit"
           returnKeyType="done"
           placeholder="Team"
           placeholderTextColor="rgba(255,255,255,0.55)"
         />
-        {/* Absolute so the name stays centred in the panel rather than in the space left over. */}
         <Pressable style={styles.paletteBtn} onPress={onPickColor} hitSlop={12}>
           <MaterialCommunityIcons name="palette" size={22} color="rgba(255,255,255,0.9)" />
         </Pressable>
@@ -61,20 +65,22 @@ export function TeamPanel({
 
 const styles = StyleSheet.create({
   panel: { flex: 1, borderRadius: 20, padding: Spacing.md, alignItems: 'center' },
-  header: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  header: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'flex-start' },
+  headerSpacer: { width: 30 },
   name: {
+    flex: 1,
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
     textAlign: 'center',
     paddingVertical: Spacing.xs,
-    // Keeps the field clear of the palette button when the name runs long.
-    marginHorizontal: 40,
-    flexShrink: 1,
+    // `multiline` lets a long name wrap instead of being cut off at the panel edge.
+    // No letterSpacing: on iOS it adds a trailing advance per character that pushes the last
+    // one outside the field's measured width, so "TEST" renders as "TES".
+    // No textTransform either - autoCapitalize uppercases the value itself, which keeps what
+    // is stored and what is drawn the same string.
   },
-  paletteBtn: { position: 'absolute', right: 0, padding: Spacing.xs },
+  paletteBtn: { padding: Spacing.xs },
   scoreArea: { flex: 1, justifyContent: 'center', alignSelf: 'stretch', alignItems: 'center' },
   score: { color: '#FFFFFF', fontSize: 120, fontWeight: '800', fontVariant: ['tabular-nums'] },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: Spacing.sm },
