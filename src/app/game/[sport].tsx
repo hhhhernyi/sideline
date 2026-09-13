@@ -1,4 +1,5 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useReducer, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -37,6 +38,16 @@ export default function GameScreen() {
 
   const editTeam = (team: Team, patch: Partial<TeamMeta>) =>
     setTeams((prev) => ({ ...prev, [team]: { ...prev[team], ...patch } }));
+
+  const score = (team: Team, delta: number) => {
+    // Taking a point back should not feel the same as scoring one, so the two use different
+    // impacts. Fire and forget - haptics are unavailable on some devices and all of the web,
+    // and a missing buzz is never worth failing a score on.
+    Haptics.impactAsync(
+      delta > 0 ? Haptics.ImpactFeedbackStyle.Light : Haptics.ImpactFeedbackStyle.Rigid,
+    ).catch(() => {});
+    dispatch({ type: 'score', team, delta });
+  };
 
   if (!sport) {
     return (
@@ -101,7 +112,7 @@ export default function GameScreen() {
               color={teams[team].color}
               onPickColor={() => setPicking(team)}
               increments={sport.increments}
-              onScore={(delta) => dispatch({ type: 'score', team, delta })}
+              onScore={(delta) => score(team, delta)}
             />
           ))}
         </View>
