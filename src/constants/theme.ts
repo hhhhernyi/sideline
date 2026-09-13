@@ -13,6 +13,21 @@ export const Colors = {
   accent: '#8FD3A8', // pastel green
 } as const;
 
+/**
+ * Swatches offered by the team colour picker. The first two are the home/away defaults, and
+ * every one is mid-toned enough that the white score on top of it stays readable.
+ */
+export const TeamColors = [
+  '#7FA8E8', // blue
+  '#F09A9A', // red
+  '#7FC59A', // green
+  '#E8B45C', // amber
+  '#A892DC', // purple
+  '#5FC2BA', // teal
+  '#E28AB0', // pink
+  '#8E9AAF', // slate
+] as const;
+
 export type ThemeColors = { [K in keyof typeof Colors]: string };
 
 export const Fonts = Platform.select({

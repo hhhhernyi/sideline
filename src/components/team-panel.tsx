@@ -1,19 +1,45 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { CardShadow, Spacing } from '@/constants/theme';
 
 type Props = {
-  label: string;
+  name: string;
+  onNameChange: (name: string) => void;
   score: number;
   color: string;
+  onPickColor: () => void;
   increments: number[];
   onScore: (delta: number) => void;
 };
 
-export function TeamPanel({ label, score, color, increments, onScore }: Props) {
+export function TeamPanel({
+  name,
+  onNameChange,
+  score,
+  color,
+  onPickColor,
+  increments,
+  onScore,
+}: Props) {
   return (
     <View style={[styles.panel, CardShadow, { backgroundColor: color }]}>
-      <Text style={styles.label}>{label}</Text>
+      <View style={styles.header}>
+        <TextInput
+          value={name}
+          onChangeText={onNameChange}
+          style={styles.name}
+          maxLength={14}
+          selectTextOnFocus
+          returnKeyType="done"
+          placeholder="Team"
+          placeholderTextColor="rgba(255,255,255,0.55)"
+        />
+        {/* Absolute so the name stays centred in the panel rather than in the space left over. */}
+        <Pressable style={styles.paletteBtn} onPress={onPickColor} hitSlop={12}>
+          <MaterialCommunityIcons name="palette" size={22} color="rgba(255,255,255,0.9)" />
+        </Pressable>
+      </View>
       <Pressable style={styles.scoreArea} onPress={() => onScore(increments[0])}>
         <Text style={styles.score} adjustsFontSizeToFit numberOfLines={1}>
           {score}
@@ -35,7 +61,20 @@ export function TeamPanel({ label, score, color, increments, onScore }: Props) {
 
 const styles = StyleSheet.create({
   panel: { flex: 1, borderRadius: 20, padding: Spacing.md, alignItems: 'center' },
-  label: { color: 'rgba(255,255,255,0.9)', fontSize: 14, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+  header: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  name: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    textAlign: 'center',
+    paddingVertical: Spacing.xs,
+    // Keeps the field clear of the palette button when the name runs long.
+    marginHorizontal: 40,
+    flexShrink: 1,
+  },
+  paletteBtn: { position: 'absolute', right: 0, padding: Spacing.xs },
   scoreArea: { flex: 1, justifyContent: 'center', alignSelf: 'stretch', alignItems: 'center' },
   score: { color: '#FFFFFF', fontSize: 120, fontWeight: '800', fontVariant: ['tabular-nums'] },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: Spacing.sm },
