@@ -24,7 +24,7 @@ export default function GameScreen() {
   const c = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const blowWhistle = useWhistle();
+  const whistle = useWhistle();
   const [game, dispatch] = useReducer(gameReducer, initialGame);
 
   // Names and colours are the user's setup for the match, not part of the score, so Reset
@@ -70,9 +70,16 @@ export default function GameScreen() {
             <Text style={[styles.navText, { color: c.text }]}>‹ Sports</Text>
           </Pressable>
           <Text style={[styles.title, { color: c.textSecondary }]}>{sport.name}</Text>
+          {/* Hold to sustain the blast; the sound loops until the finger lifts. Safe to use
+              Pressable's function form here - this one is not inside a Link asChild. */}
           <Pressable
-            style={[styles.iconBtn, CardShadow, { backgroundColor: c.accent }]}
-            onPress={blowWhistle}
+            style={({ pressed }) => [
+              styles.iconBtn,
+              CardShadow,
+              { backgroundColor: c.accent, transform: [{ scale: pressed ? 0.93 : 1 }] },
+            ]}
+            onPressIn={whistle.start}
+            onPressOut={whistle.stop}
             hitSlop={12}>
             <MaterialCommunityIcons name="whistle" size={24} color={c.text} />
           </Pressable>
