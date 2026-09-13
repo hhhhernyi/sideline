@@ -15,28 +15,28 @@ EAS and `ascAppId` is pinned in eas.json, so neither prompts for an Apple login:
 
 `autoIncrement` handles build numbers; `--latest` resolves to the newest finished build.
 
-## Release: App Store (in progress)
+## Release: App Store (submitted, awaiting review)
 
-Listing metadata is pushed from `store.config.json` with `npx eas-cli@latest metadata:push`, and
-`metadata:pull` reads back what App Store Connect actually holds. Done so far:
+Version 1.0 with build 6 submitted 13 Sep 2026. Review typically takes 24-48h, and
+`automaticRelease: true` in store.config.json means approval puts it live without another step.
 
-- [x] Name: **Sideline Scoreboard**. Both "Sideline" and "Scoreboard!" were refused as already
-      taken — App Store Connect's reserved-name list is not publicly searchable, so the only way
-      to test a name is to push it and see. The bundle ID and the home-screen name stay "Sideline".
-- [x] Subtitle, description, keywords, categories (Sports / Utilities), age rating
-- [x] Privacy policy URL — https://hhhhernyi.github.io/scoreboard-privacy/, served by GitHub Pages
-      from the public repo `hhhhernyi/scoreboard-privacy`. Keep that repo public and Pages enabled:
-      Apple re-checks the URL on every submission. It doubles as the support URL for now.
+Listing metadata lives in `store.config.json` — `npx eas-cli@latest metadata:push` writes it,
+`metadata:pull` reads back what App Store Connect actually holds. Screenshots, App Privacy,
+pricing, copyright and content rights are App Store Connect UI only; eas metadata cannot touch
+them.
 
-Left, and all of it manual in App Store Connect — `eas metadata` cannot do these:
+- Name **Scoreboard - All Sports**. "Sideline", "Scoreboard!" and "Sports Scoreboard" were all
+  refused as taken. The reserved-name list is not publicly searchable and the App Store shows no
+  published app under any of them, so the only way to test a name is to push it and read the
+  error. Listing name only — the bundle ID and the home-screen name are still "Sideline".
+- Privacy policy https://hhhhernyi.github.io/scoreboard-privacy/ (GitHub Pages, public repo
+  `hhhhernyi/scoreboard-privacy`). **Keep that repo public and Pages enabled** — Apple re-checks
+  the URL on every submission, so it has to outlive any one of them.
+- iPhone-only as of build 6. `supportsTablet: true` would have required a 13" iPad screenshot set
+  and put the app in front of a reviewer on a device its layout has never run on.
 
-- [ ] **Screenshots.** 6.7" and 6.5" iPhone, and they must be LANDSCAPE since the app is
-      landscape-locked. Capture from the TestFlight build on the phone.
-- [ ] **App Privacy questionnaire** (the "Data Collection" section). Answer *no data collected* —
-      no backend, no storage, no network. This lives in the ASC UI, not in store.config.json.
-- [ ] A real support URL, if the privacy page standing in for it is not good enough
-- [ ] Set the version's Build to the one being shipped, then Add for Review → Submit
-- [ ] Review takes ~24-48h
+If rejected, the likeliest causes are the listing name being read as descriptive text or a query
+about the privacy URL. Both are metadata fixes — resubmit without a new build.
 
 ## Release: Google Play (paused)
 
