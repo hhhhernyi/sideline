@@ -81,19 +81,6 @@ export default function GameScreen() {
             <Text style={[styles.navText, { color: c.text }]}>‹ Sports</Text>
           </Pressable>
           <Text style={[styles.title, { color: c.textSecondary }]}>{sport.name}</Text>
-          {/* Hold to sustain the blast; the sound loops until the finger lifts. Safe to use
-              Pressable's function form here - this one is not inside a Link asChild. */}
-          <Pressable
-            style={({ pressed }) => [
-              styles.iconBtn,
-              CardShadow,
-              { backgroundColor: c.accent, transform: [{ scale: pressed ? 0.93 : 1 }] },
-            ]}
-            onPressIn={whistle.start}
-            onPressOut={whistle.stop}
-            hitSlop={12}>
-            <MaterialCommunityIcons name="whistle" size={24} color={c.text} />
-          </Pressable>
           <Pressable
             style={[styles.navBtn, CardShadow, { backgroundColor: c.card }]}
             onPress={() => dispatch({ type: 'reset' })}
@@ -117,6 +104,22 @@ export default function GameScreen() {
           ))}
         </View>
 
+        <View style={styles.footer}>
+          {/* Hold to sustain the blast. Safe to use Pressable's function form here - this one
+              is not inside a Link asChild, where Slot would spread the function away. */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.whistleBtn,
+              CardShadow,
+              { backgroundColor: c.accent, transform: [{ scale: pressed ? 0.97 : 1 }] },
+            ]}
+            onPressIn={whistle.start}
+            onPressOut={whistle.stop}
+            hitSlop={16}>
+            <MaterialCommunityIcons name="whistle" size={26} color={c.text} />
+            <Text style={[styles.whistleText, { color: c.text }]}>HOLD</Text>
+          </Pressable>
+        </View>
       </View>
 
       <ColorPicker
@@ -144,15 +147,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconBtn: {
-    width: NAV_BTN_HEIGHT,
-    height: NAV_BTN_HEIGHT,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   navText: { fontSize: 17, fontWeight: '700' },
   // Takes the space between the buttons, so the sport name stays centred on the screen.
   title: { flex: 1, fontSize: 16, fontWeight: '600', textAlign: 'center' },
   teams: { flex: 1, flexDirection: 'row', gap: Spacing.md },
+  footer: { alignItems: 'center' },
+  whistleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    minWidth: 200,
+    height: 52,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: 999,
+  },
+  whistleText: { fontSize: 15, fontWeight: '800', letterSpacing: 1 },
 });
