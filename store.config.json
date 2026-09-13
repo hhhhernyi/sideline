@@ -1,0 +1,64 @@
+{
+  "configVersion": 0,
+  "apple": {
+    "version": "1.0",
+    "release": {
+      "automaticRelease": true
+    },
+    "info": {
+      "en-US": {
+        "description": "Scoreboard! turns your phone into a clean, readable scoreboard for the game in front of you.\n\nPick a sport, name the teams, and start counting. No account, no sign-up, no setup.\n\nFOUR SPORTS\nSoccer, basketball, volleyball and badminton. Basketball gets one, two and three point buttons. Volleyball ends at 25 and badminton at 21, both win-by-two, with badminton capped at 30 the way a real game is.\n\nBUILT TO BE READ ACROSS A PITCH\nBig landscape scores, high contrast, and team panels you tap anywhere to score.\n\nMAKE IT YOUR MATCH\nRename Home and Away to the actual teams, and pick each side's colour from eight presets.\n\nA REAL WHISTLE\nHold the whistle button to blow for as long as you need, so a full-time short-short-long sounds right. It works with the ringer switch off, because that is where phones live courtside.\n\nNOTHING IS COLLECTED\nNo accounts, no analytics, no tracking, and no network access. Scores live on your phone for as long as the match does.\n",
+        "keywords": [
+          "scoreboard",
+          "score",
+          "keeper",
+          "tally",
+          "soccer",
+          "basketball",
+          "volleyball",
+          "badminton",
+          "referee",
+          "whistle",
+          "match"
+        ],
+        "supportUrl": "https://hhhhernyi.github.io/scoreboard-privacy/",
+        "title": "Sideline Scoreboard",
+        "subtitle": "Keep score for any match",
+        "privacyPolicyUrl": "https://hhhhernyi.github.io/scoreboard-privacy/"
+      }
+    },
+    "categories": [
+      "SPORTS",
+      "UTILITIES"
+    ],
+    "advisory": {
+      "ageRatingOverride": "NONE",
+      "alcoholTobaccoOrDrugUseOrReferences": "NONE",
+      "contests": "NONE",
+      "gambling": false,
+      "gamblingSimulated": "NONE",
+      "horrorOrFearThemes": "NONE",
+      "kidsAgeBand": null,
+      "koreaAgeRatingOverride": "NONE",
+      "lootBox": false,
+      "matureOrSuggestiveThemes": "NONE",
+      "medicalOrTreatmentInformation": "NONE",
+      "profanityOrCrudeHumor": "NONE",
+      "sexualContentGraphicAndNudity": "NONE",
+      "sexualContentOrNudity": "NONE",
+      "unrestrictedWebAccess": false,
+      "violenceCartoonOrFantasy": "NONE",
+      "violenceRealistic": "NONE",
+      "violenceRealisticProlongedGraphicOrSadistic": "NONE",
+      "advertising": false,
+      "ageAssurance": false,
+      "ageRatingOverrideV2": "NONE",
+      "developerAgeRatingInfoUrl": null,
+      "gunsOrOtherWeapons": "NONE",
+      "healthOrWellnessTopics": false,
+      "messagingAndChat": false,
+      "parentalControls": false,
+      "userGeneratedContent": false
+    }
+  }
+}

@@ -15,17 +15,28 @@ EAS and `ascAppId` is pinned in eas.json, so neither prompts for an Apple login:
 
 `autoIncrement` handles build numbers; `--latest` resolves to the newest finished build.
 
-## Release: App Store (next)
+## Release: App Store (in progress)
 
-- [ ] The listing name "Sideline" is TAKEN on the App Store. The record is currently the
-      placeholder `Sideline (3fa1a8)` and cannot ship under it. Pick a unique listing name
-      ("Sideline Scoreboard", "Sideline — Match Scores"). This is listing metadata only: the
-      bundle ID and the home-screen name from app.json both stay "Sideline".
-- [ ] Listing metadata: description, keywords, support URL, age rating questionnaire
-- [ ] Screenshots must be LANDSCAPE (the app is landscape-locked); 6.7" and 6.5" sizes required.
-      Capture them from the TestFlight build on the phone.
-- [ ] Privacy / Data Collection: answer "no data collected" — no backend, no storage
-- [ ] Set the version's Build, then Add for Review → Submit. Review takes ~24-48h.
+Listing metadata is pushed from `store.config.json` with `npx eas-cli@latest metadata:push`, and
+`metadata:pull` reads back what App Store Connect actually holds. Done so far:
+
+- [x] Name: **Sideline Scoreboard**. Both "Sideline" and "Scoreboard!" were refused as already
+      taken — App Store Connect's reserved-name list is not publicly searchable, so the only way
+      to test a name is to push it and see. The bundle ID and the home-screen name stay "Sideline".
+- [x] Subtitle, description, keywords, categories (Sports / Utilities), age rating
+- [x] Privacy policy URL — https://hhhhernyi.github.io/scoreboard-privacy/, served by GitHub Pages
+      from the public repo `hhhhernyi/scoreboard-privacy`. Keep that repo public and Pages enabled:
+      Apple re-checks the URL on every submission. It doubles as the support URL for now.
+
+Left, and all of it manual in App Store Connect — `eas metadata` cannot do these:
+
+- [ ] **Screenshots.** 6.7" and 6.5" iPhone, and they must be LANDSCAPE since the app is
+      landscape-locked. Capture from the TestFlight build on the phone.
+- [ ] **App Privacy questionnaire** (the "Data Collection" section). Answer *no data collected* —
+      no backend, no storage, no network. This lives in the ASC UI, not in store.config.json.
+- [ ] A real support URL, if the privacy page standing in for it is not good enough
+- [ ] Set the version's Build to the one being shipped, then Add for Review → Submit
+- [ ] Review takes ~24-48h
 
 ## Release: Google Play (paused)
 
