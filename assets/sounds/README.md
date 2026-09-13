@@ -25,7 +25,10 @@ sample delta. At ~4 kHz sampled at 48 kHz there are only ~12 samples per cycle, 
 legitimately differ by a large fraction of peak — an absolute wrap delta near zero is the wrong
 target, and chasing it will make the loop worse.
 
-The release fade and the minimum blast length live in `src/hooks/use-whistle.ts`, not in the asset.
+Playback is deliberately plain - `play()` on press, `pause()` on release, nothing deferred.
+An earlier version ramped the volume down over a series of `setTimeout`s; any one of those
+firing against a released player throws, and an uncaught throw in a timer callback kills the
+JS thread, which presents as the whole scoreboard freezing rather than as an audio fault.
 
 It is WAV rather than MP3 because no encoder is installed locally, and MP3 is a poor fit for a
 gapless loop anyway: the format pads the start and end of the stream, which puts a gap at the loop
