@@ -8,14 +8,12 @@ const theme = {
   colors: { ...DefaultTheme.colors, background: Colors.background, card: Colors.background, text: Colors.text },
 };
 
-// Orientation is locked app-wide in app.json, so no screen sets it.
+// No native headers anywhere: the picker has its own title band and the scoreboard its own top
+// bar, both of which need the full width. Orientation is locked app-wide in app.json.
 export default function RootLayout() {
   return (
     <ThemeProvider value={theme}>
-      <Stack screenOptions={{ headerShadowVisible: false }}>
-        <Stack.Screen name="index" options={{ title: 'Sideline' }} />
-        <Stack.Screen name="game/[sport]" options={{ headerShown: false }} />
-      </Stack>
+      <Stack screenOptions={{ headerShown: false }} />
       <StatusBar style="dark" />
     </ThemeProvider>
   );

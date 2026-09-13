@@ -1,22 +1,31 @@
 # TODO
 
-## Release: TestFlight (in progress)
+## Release: TestFlight (done for build 3)
 
-Builds are already queued on EAS and credentials are set up — nothing here is time-sensitive.
-Build artifacts are kept for 30 days.
+- [x] iOS build 3 built and submitted; tested on device
+- App record: https://appstoreconnect.apple.com/apps/6811497662/testflight/ios
+- An `Team (Expo)` internal testing group was created by the submit and already includes
+  hyileenet@gmail.com. Internal testers skip Beta App Review.
 
-- [ ] Check the iOS build succeeded: https://expo.dev/accounts/hhhhernyi/projects/sideline/builds
-- [ ] Submit it: `npx eas-cli@latest submit --platform ios --latest`
-      - `--latest` resolves to the most recent finished build, so no file to download
-      - Say yes when it offers to create the app record in App Store Connect
-      - Expect another Apple login + 2FA code; the saved session expires quickly
-- [ ] App Store Connect → TestFlight: wait for the build to leave "Processing" (5-15 min)
-- [ ] Create an Internal Testing group and add yourself
-      - No Beta App Review for internal testers
-      - No export-compliance prompt: `ITSAppUsesNonExemptEncryption: false` is already in app.json
-- [ ] Install TestFlight on the iPhone, sign in with the same Apple ID, install Sideline
+Further rounds are now two non-interactive commands — an App Store Connect API key is stored on
+EAS and `ascAppId` is pinned in eas.json, so neither prompts for an Apple login:
 
-Updates later are just `eas build` then `eas submit` again — `autoIncrement` handles build numbers.
+    npx eas-cli@latest build --platform ios --profile production
+    npx eas-cli@latest submit --platform ios --latest
+
+`autoIncrement` handles build numbers; `--latest` resolves to the newest finished build.
+
+## Release: App Store (next)
+
+- [ ] The listing name "Sideline" is TAKEN on the App Store. The record is currently the
+      placeholder `Sideline (3fa1a8)` and cannot ship under it. Pick a unique listing name
+      ("Sideline Scoreboard", "Sideline — Match Scores"). This is listing metadata only: the
+      bundle ID and the home-screen name from app.json both stay "Sideline".
+- [ ] Listing metadata: description, keywords, support URL, age rating questionnaire
+- [ ] Screenshots must be LANDSCAPE (the app is landscape-locked); 6.7" and 6.5" sizes required.
+      Capture them from the TestFlight build on the phone.
+- [ ] Privacy / Data Collection: answer "no data collected" — no backend, no storage
+- [ ] Set the version's Build, then Add for Review → Submit. Review takes ~24-48h.
 
 ## Release: Google Play (paused)
 
@@ -33,8 +42,10 @@ device is an iPhone.
 
 ## App
 
-- [ ] Replace the app icon and splash — `assets/images/` is still the Expo default artwork
-- [ ] Tennis and badminton count points linearly, so tennis reads 1-2-3 rather than 15/30/40, and
-      "3 sets" means three periods rather than best-of-three. These are the first sports that
-      cannot be expressed as data in `sports.ts` alone; real scoring needs logic in `lib/game.ts`
-- [ ] Scoreboard still uses the scaffold layout — it has not had the design pass the picker got
+- [x] Replace the app icon and splash — now the seven-segment split-scoreboard mark
+- [x] Scoreboard design pass: undo and the period button are gone, Reset moved to the top-right
+      opposite Back at matching size. Scoring is just the panels and their +/- buttons now.
+- [ ] Tennis was removed rather than faked: it cannot be expressed as data in `sports.ts`, since
+      15/30/40/deuce needs real logic in `lib/game.ts`. Add it back only with that logic.
+- [ ] Badminton and volleyball still count linearly with no rally-to-21/25 or win-by-2 handling.
+      Same story — needs logic in `lib/game.ts`, not a `sports.ts` entry.
