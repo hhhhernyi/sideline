@@ -11,7 +11,7 @@ import { getSport } from '@/constants/sports';
 import { CardShadow, Colors, Spacing, TeamColors } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useWhistle } from '@/hooks/use-whistle';
-import { gameReducer, initialGame, type Team } from '@/lib/game';
+import { gameReducer, getWinner, initialGame, type Team } from '@/lib/game';
 
 /** Back and Reset are the same shape, so the longer label sets the width for both. */
 const NAV_BTN_WIDTH = 132;
@@ -39,7 +39,12 @@ export default function GameScreen() {
   const editTeam = (team: Team, patch: Partial<TeamMeta>) =>
     setTeams((prev) => ({ ...prev, [team]: { ...prev[team], ...patch } }));
 
+  const winner = getWinner(game, sport?.win);
+
   const score = (team: Team, delta: number) => {
+    // Once the game is decided, stop adding points - but let -1 through, so a mis-tap that
+    // ended the game early can still be taken back.
+    if (winner && delta > 0) return;
     // Taking a point back should not feel the same as scoring one, so the two use different
     // impacts. Fire and forget - haptics are unavailable on some devices and all of the web,
     // and a missing buzz is never worth failing a score on.
@@ -80,7 +85,15 @@ export default function GameScreen() {
             hitSlop={12}>
             <Text style={[styles.navText, { color: c.text }]}>‹ Sports</Text>
           </Pressable>
-          <Text style={[styles.title, { color: c.textSecondary }]}>{sport.name}</Text>
+          <Text
+            style={[styles.title, winner ? styles.titleWon : null, { color: winner ? c.text : c.textSecondary }]}
+            numberOfLines={1}>
+            {winner
+              ? `${teams[winner].name} wins`
+              : sport.win
+                ? `${sport.name} · to ${sport.win.to}`
+                : sport.name}
+          </Text>
           <Pressable
             style={[styles.navBtn, CardShadow, { backgroundColor: c.card }]}
             onPress={() => dispatch({ type: 'reset' })}
@@ -100,6 +113,8 @@ export default function GameScreen() {
               onPickColor={() => setPicking(team)}
               increments={sport.increments}
               onScore={(delta) => score(team, delta)}
+              locked={winner !== null}
+              won={winner === team}
             />
           ))}
         </View>
@@ -150,6 +165,7 @@ const styles = StyleSheet.create({
   navText: { fontSize: 17, fontWeight: '700' },
   // Takes the space between the buttons, so the sport name stays centred on the screen.
   title: { flex: 1, fontSize: 16, fontWeight: '600', textAlign: 'center' },
+  titleWon: { fontSize: 18, fontWeight: '800' },
   teams: { flex: 1, flexDirection: 'row', gap: Spacing.md },
   footer: { alignItems: 'center' },
   whistleBtn: {

@@ -47,5 +47,8 @@ device is an iPhone.
       opposite Back at matching size. Scoring is just the panels and their +/- buttons now.
 - [ ] Tennis was removed rather than faked: it cannot be expressed as data in `sports.ts`, since
       15/30/40/deuce needs real logic in `lib/game.ts`. Add it back only with that logic.
-- [ ] Badminton and volleyball still count linearly with no rally-to-21/25 or win-by-2 handling.
-      Same story — needs logic in `lib/game.ts`, not a `sports.ts` entry.
+- [x] Badminton and volleyball now end at a winning score: 21 and 25, both win-by-2, badminton
+      capped at 30. Soccer and basketball are played to the clock, so they keep counting.
+- [ ] Volleyball is a single game, not a match — there is no set tracking, so "to 25" is one set
+      rather than best-of-five. Adding sets means bringing back something like the period state
+      that was removed, so it needs a deliberate design rather than a flag.

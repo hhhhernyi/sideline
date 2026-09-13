@@ -11,6 +11,9 @@ type Props = {
   onPickColor: () => void;
   increments: number[];
   onScore: (delta: number) => void;
+  /** True once the game is decided: adding points is off, taking them back is not. */
+  locked: boolean;
+  won: boolean;
 };
 
 export function TeamPanel({
@@ -21,9 +24,17 @@ export function TeamPanel({
   onPickColor,
   increments,
   onScore,
+  locked,
+  won,
 }: Props) {
   return (
-    <View style={[styles.panel, CardShadow, { backgroundColor: color }]}>
+    <View
+      style={[
+        styles.panel,
+        CardShadow,
+        { backgroundColor: color },
+        won && styles.winner,
+      ]}>
       <View style={styles.header}>
         {/* Balances the palette button so the name centres on the panel, not on what is left. */}
         <View style={styles.headerSpacer} />
@@ -44,14 +55,21 @@ export function TeamPanel({
           <MaterialCommunityIcons name="palette" size={22} color="rgba(255,255,255,0.9)" />
         </Pressable>
       </View>
-      <Pressable style={styles.scoreArea} onPress={() => onScore(increments[0])}>
+      <Pressable
+        style={styles.scoreArea}
+        onPress={() => onScore(increments[0])}
+        disabled={locked}>
         <Text style={styles.score} adjustsFontSizeToFit numberOfLines={1}>
           {score}
         </Text>
       </Pressable>
       <View style={styles.buttons}>
         {increments.map((n) => (
-          <Pressable key={n} style={styles.btn} onPress={() => onScore(n)}>
+          <Pressable
+            key={n}
+            style={[styles.btn, locked && styles.btnLocked]}
+            onPress={() => onScore(n)}
+            disabled={locked}>
             <Text style={styles.btnText}>+{n}</Text>
           </Pressable>
         ))}
@@ -65,6 +83,7 @@ export function TeamPanel({
 
 const styles = StyleSheet.create({
   panel: { flex: 1, borderRadius: 20, padding: Spacing.md, alignItems: 'center' },
+  winner: { borderWidth: 3, borderColor: 'rgba(255,255,255,0.95)' },
   header: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'flex-start' },
   headerSpacer: { width: 30 },
   name: {
@@ -92,5 +111,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.3)',
     alignItems: 'center',
   },
+  // Dimmed rather than hidden, so the panel does not reflow the moment the game is decided.
+  btnLocked: { opacity: 0.35 },
   btnText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700' },
 });
