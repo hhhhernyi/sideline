@@ -15,7 +15,7 @@ EAS and `ascAppId` is pinned in eas.json, so neither prompts for an Apple login:
 
 `autoIncrement` handles build numbers; `--latest` resolves to the newest finished build.
 
-## Release: App Store (rejected 15 Sep - Guideline 2.1, information needed)
+## Release: App Store (answered the 2.1 questionnaire, back in review 15 Sep)
 
 Version 1.0 with build 6 submitted 13 Sep 2026, **rejected 15 Sep under Guideline 2.1 -
 Information Needed**. Neither guess below was right: the rejection is the boilerplate
@@ -29,9 +29,23 @@ fit the 4000-character App Review Information -> Notes field, Part 3 the shot li
 recording. Apple asks for the answers in **both** places - the Notes field is what spares future
 submissions the same round trip, so fill it even though the reply alone would clear this one.
 
-- [ ] Record the flow on a physical iPhone, in landscape, starting from the Home Screen launch
-- [ ] Paste Part 2 into App Review Information -> Notes, with a link to the recording
-- [ ] Reply in Resolution Center with Part 1, the video attached
+- [x] Recorded on a physical iPhone, link-shared on Drive and verified anonymously
+- [x] Part 2 pasted into App Review Information -> Notes
+- [x] Part 1 sent in Resolution Center
+- [x] Resubmitted, build 6 unchanged. **Waiting for Review** as of 15 Sep.
+
+**Getting a rejected version back into review is not obvious, and the reply alone does not do
+it.** A rejected submission is closed permanently: its `Resubmit to App Review` button stays
+disabled and the page says only "you can make edits to your app version below". The way through
+is to start a *new* submission from the version page - open the 1.0 version, save an edit,
+`Add for Review` at the top right, then `Submit to App Review` on the page that follows. Nothing
+is submitted until the status reads **Waiting for Review**; `Ready for Review` means the item is
+staged and still waiting on that last click. No new build is needed for a metadata or
+information-only rejection - build 6 went back as it was.
+
+Both free-text fields cap at **4000 characters** - the Resolution Center reply box as well as the
+App Review Information notes. Neither is documented and neither shows a counter; the limit
+surfaces only when a longer paste is refused.
 
 `automaticRelease: true` in store.config.json means approval puts it live without another step.
 
