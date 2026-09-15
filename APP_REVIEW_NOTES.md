@@ -23,8 +23,8 @@ app being launched from the Home Screen and showing the typical user flow end to
 
 https://drive.google.com/file/d/1WYupObO1lYo__EGB80pPY0704GJSdnIp/view
 
-(The same recording is attached to this reply, and the link is also in the App Review Information
-notes for future reference.)
+(The link opens without a sign-in. All of the information below has also been added to the Notes
+field of the App Review Information section, as requested, for reference on future submissions.)
 
 Please note the app's Home Screen name is **Sideline** — that is the bundle's display name. The
 App Store listing name is "Scoreboard - All Sports". They refer to the same app.
