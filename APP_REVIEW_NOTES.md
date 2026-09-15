@@ -18,8 +18,13 @@ submission. Here is all of the information requested.
 
 **1. Screen recording**
 
-Attached is a screen recording made on a physical iPhone running the latest iOS, beginning with
-the app being launched from the Home Screen and showing the typical user flow end to end.
+Here is a screen recording made on a physical iPhone running the latest iOS, beginning with the
+app being launched from the Home Screen and showing the typical user flow end to end:
+
+https://drive.google.com/file/d/1WYupObO1lYo__EGB80pPY0704GJSdnIp/view
+
+(The same recording is attached to this reply, and the link is also in the App Review Information
+notes for future reference.)
 
 Please note the app's Home Screen name is **Sideline** — that is the bundle's display name. The
 App Store listing name is "Scoreboard - All Sports". They refer to the same app.
@@ -141,54 +146,54 @@ Please let me know if anything further would help.
 
 ## Part 2 — App Review Information → Notes (condensed, fits the 4000-char limit)
 
+SCREEN RECORDING (physical iPhone, latest iOS, begins at launch):
+https://drive.google.com/file/d/1WYupObO1lYo__EGB80pPY0704GJSdnIp/view
+
 Scoreboard - All Sports is a manual scoreboard for a game being played in front of the user. Pick
 one of four sports (soccer, basketball, volleyball, badminton), optionally rename the two teams
-and pick their colours, then tap a team's panel to add a point. For amateur and recreational
-players, coaches, referees, PE teachers and parents, where no scoreboard exists and the score is
-otherwise kept in someone's head.
+and pick their colours, then tap a team's panel to add a point. It is for amateur players,
+coaches, referees, PE teachers and parents, where no scoreboard exists and the score is otherwise
+kept in someone's head.
 
 HOME SCREEN NAME: the app installs as "Sideline" (the bundle display name). The listing name is
 "Scoreboard - All Sports". Same app.
 
-DEMO ACCOUNT: not applicable. The app has no accounts, no login, no server and no setup. Nothing
-is behind a gate, so no credentials or sample files exist or are needed.
+NO ACCOUNTS / DEMO ACCOUNT: not applicable. There is no registration, sign-in, profile or account
+deletion, because the app has no accounts, no server and no setup. Nothing is behind a gate, so no
+credentials or sample files are needed.
 
-ORIENTATION: landscape-only, locks to landscape. Please hold the device sideways.
-
-HOW TO REACH EVERY FEATURE (from launch, no setup):
+HOW TO REACH EVERY FEATURE (landscape-only - please hold the device sideways; no setup):
 - Launch to the "Pick a sport" grid, then tap Soccer, Basketball, Volleyball or Badminton.
-- Scoreboard: tap anywhere on a team panel to add a point (basketball shows 1/2/3 point buttons);
-  -1 takes a point back; tap a team's name to rename it; tap its swatch to pick from 8 colours;
-  press and hold the whistle button to whistle for as long as it is held (it plays with the
-  ringer switch off, intentionally, for courtside use); Reset returns the score to 0-0 and keeps
-  names and colours; "Sports" in the top bar goes back.
+- Tap anywhere on a team panel to add a point (basketball shows 1/2/3 point buttons); -1 takes a
+  point back; tap a team's name to rename it; tap its swatch to pick from 8 colours; press and
+  hold the whistle button to whistle for as long as it is held (it plays with the ringer switch
+  off, intentionally, for courtside use); Reset returns the score to 0-0 and keeps names and
+  colours; "Sports" in the top bar goes back.
 - Volleyball ends at 25 win-by-2 and badminton at 21 win-by-2 capped at 30; the top bar then
   reads "<team> wins" and blocks further points, while -1 still works to undo a mis-tap.
 - Scores live in memory only, for the life of the screen. Nothing is saved, exported or sent.
 
-NO ACCOUNTS: no registration, sign-in, profile or account deletion, because there are no accounts.
-
 NO USER-GENERATED CONTENT: a user may type a team name, but it stays in memory on that one
-device, is never transmitted or stored, and no other user can ever see it. There is therefore no
-content to report or block and no moderation mechanism is required.
+device, is never transmitted, and no other user can ever see it. There is therefore no content to
+report or block and no moderation mechanism is required.
 
 NO PAID CONTENT: no in-app purchases, subscriptions, unlockable features or advertising.
 
 EXTERNAL SERVICES: none. The app makes no network requests at all and works with no connection.
 No data or content providers (the four sports and their rules are hard-coded in the binary), no
-authentication service, no payment processor, no AI service, no analytics, attribution, crash
-reporting or tracking SDK, and no backend or cloud storage. Built with Expo (React Native); every
-dependency is an open-source client-side library compiled into the binary. EAS is a compile-time
-build service only; the shipped app contacts no server and over-the-air updates are disabled.
-Consistent with our App Privacy declaration: no data collected.
+authentication service, no payment processor, no AI service, no analytics or tracking SDK, and no
+backend or cloud storage. Built with Expo (React Native); every dependency is an open-source
+client-side library compiled into the binary. EAS is a compile-time build service only; the
+shipped app contacts no server and OTA updates are disabled. Consistent with our App Privacy
+declaration: no data collected.
 
 REGIONAL DIFFERENCES: none. Identical in every region and storefront. No geolocation, region
 detection, server, remote config or feature flags, so behaviour cannot vary by region. English
-(en-US) only, not localised. Nothing is region-locked.
+(en-US) only. Nothing is region-locked.
 
 REGULATED INDUSTRY: not applicable. A manual counter driven entirely by the user's taps. No
-gambling, betting, odds or wagering, no real-money or simulated gaming, no health, medical or
-fitness data, no financial services, not directed at children.
+gambling, betting or wagering, no real-money or simulated gaming, no health or medical data, no
+financial services, not directed at children.
 
 THIRD-PARTY MATERIAL: none that is protected. No league, club, federation, team or competition
 names, logos, marks or kits - "Soccer", "Basketball", "Volleyball" and "Badminton" are the generic
