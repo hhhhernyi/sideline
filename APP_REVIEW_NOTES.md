@@ -6,139 +6,42 @@ build is needed.
 
 Apple asked for this in two places: as a **Resolution Center reply**, and pasted into **App Store
 Connect → App Information → App Review Information → Notes**, so it is on file for every future
-submission. Part 1 is the reply. Part 2 is the same content trimmed under the Notes field's
-4000-character limit. Part 3 is the shot list for the recording.
+submission. Part 1 is the reply. Part 2 is the same content shaped for the notes field. Part 3 is
+the shot list for the recording.
+
+**Both fields cap at 4000 characters** - the Resolution Center reply box as well as the notes
+field, which is not documented anywhere and only shows up when a longer paste is refused. Both
+parts here are written to fit, so check the count before adding to either.
 
 ---
 
-## Part 1 — Resolution Center reply
+## Part 1 — Resolution Center reply (3909 chars)
 
-Thank you for the review. Build 6 was tested on a physical iPhone via TestFlight before
-submission. Here is all of the information requested.
+Thank you. Build 6 was tested on a physical iPhone via TestFlight before submission. Everything below has also been added to the App Review Information notes.
 
-**1. Screen recording**
-
-Here is a screen recording made on a physical iPhone running the latest iOS, beginning with the
-app being launched from the Home Screen and showing the typical user flow end to end:
-
+1. SCREEN RECORDING
+Recorded on a physical iPhone on the latest iOS, starting from the app launching on the Home Screen and showing the typical user flow. Opens without a sign-in:
 https://drive.google.com/file/d/1WYupObO1lYo__EGB80pPY0704GJSdnIp/view
+The Home Screen name is "Sideline" (the bundle display name); the listing name is "Scoreboard - All Sports". Same app. There is no account registration, login or deletion, no user-generated content, and no paid content or in-app purchases, so none of those appear in the recording. A user may type a team name, but it stays on that one device, is never transmitted, and no other user can see it, so no reporting or blocking mechanism is required.
 
-(The link opens without a sign-in. All of the information below has also been added to the Notes
-field of the App Review Information section, as requested, for reference on future submissions.)
+2. PURPOSE AND AUDIENCE
+A manual scoreboard for a game being played in front of the user: for amateur players, coaches, referees, PE teachers and parents. Amateur matches have no scoreboard, so the score is kept in someone's head and gets lost or disputed; this is one anyone can prop on the sideline and read across a pitch. It scores by each sport's real rules rather than as two plain counters - basketball has 1, 2 and 3 point buttons, volleyball runs to 25 win-by-2, badminton to 21 win-by-2 capped at 30.
 
-Please note the app's Home Screen name is **Sideline** — that is the bundle's display name. The
-App Store listing name is "Scoreboard - All Sports". They refer to the same app.
+3. SETUP AND ACCESS
+No setup, no login credentials, no demo account and no sample files: nothing is behind a gate. Landscape-only, so please hold the device sideways.
+- Launch to the "Pick a sport" grid, then tap Soccer, Basketball, Volleyball or Badminton.
+- Tap anywhere on a team panel to add a point (basketball shows 1/2/3 buttons); -1 takes a point back; tap a team's name to rename it, its swatch to recolour it; press and hold the whistle button to whistle for as long as it is held (it plays with the ringer switch off, intentionally, for courtside use); Reset returns the score to 0-0 and keeps names and colours; "Sports" goes back.
+- In volleyball and badminton the top bar reads "<team> wins" at the winning score and blocks further points.
+- Scores live in memory only; nothing is saved, exported or sent.
 
-The three items Apple asks to have included in the recording do not exist in this app, so none of
-them appear in it:
+4. EXTERNAL SERVICES
+None. The app makes no network requests at all and works with no connection. No data or content providers (the sports and their rules are hard-coded in the binary), no authentication service, no payment processor, no AI service, no analytics or tracking SDK, no backend or cloud storage. Built with Expo (React Native); every dependency is an open-source client-side library compiled into the binary. EAS builds it at compile time only; the shipped app contacts no server and OTA updates are disabled. This matches our App Privacy declaration: no data collected.
 
-- **Account registration, login and deletion** — the app has no accounts of any kind. There is
-  no sign-up, no sign-in, no profile and no server, so there is nothing to delete.
-- **User-generated content** — none is shared or published. A user may type a team's name (for
-  example changing "Home" to "Lions"), but that text stays in memory on the one device, is never
-  transmitted, stored or shown to any other user, and disappears when the screen is left. No
-  other user can ever see it, so there is no content to report or block and no moderation
-  mechanism is required.
-- **Paid content or features** — there are none. No in-app purchases, no subscriptions, no
-  unlockable features, no advertising. Every feature is available to everyone immediately.
+5. REGIONAL DIFFERENCES
+None. The app functions identically in every region and storefront. No geolocation, region detection, server, remote configuration or feature flags, so behaviour cannot vary by region. English (en-US) only.
 
-**2. The app's purpose and target audience**
-
-Scoreboard - All Sports turns an iPhone into a large, readable manual scoreboard for a game being
-played in front of the user.
-
-*Problem it solves:* amateur and recreational matches have no scoreboard. At school games, club
-training, pick-up games, PE lessons and games in a park, the score is kept in someone's head or
-on a scrap of paper, where it gets lost or disputed. This app is a scoreboard that anyone can
-prop on the sideline and read from across a pitch or court.
-
-*Target audience:* recreational and amateur players, coaches, referees, PE teachers and parents
-watching a game. It is deliberately for people who want to start counting in two taps, with no
-account and no setup.
-
-*Value it provides:* the score is kept with the real rules of each sport rather than by two plain
-counters — basketball has separate 1, 2 and 3 point buttons; volleyball runs to 25 win-by-two;
-badminton runs to 21 win-by-two, capped at 30 — so the app announces the winner at the correct
-moment. It is readable at a distance, works one-handed, and includes a real whistle that sounds
-even with the ringer switch off, because a courtside phone is usually silenced.
-
-**3. Instructions for setting up and accessing the main features**
-
-No setup is required and none is possible. There are no login credentials, no demo account and no
-sample files, because nothing in the app is behind a gate — every feature is reachable from
-launch. The app is landscape-only and locks to landscape, so please hold the device sideways.
-
-- **Launch** → the "Pick a sport" screen, a grid of four cards: Soccer, Basketball, Volleyball,
-  Badminton. Tap any card to open the scoreboard for that sport.
-- **Scoreboard screen** — two team panels, Home on the left, Away on the right:
-  - *Add a point:* tap anywhere on a team's panel. Basketball instead shows separate 1, 2 and 3
-    point buttons on each panel.
-  - *Take a point back:* the −1 button on that team's panel.
-  - *Rename a team:* tap the team's name ("Home" or "Away") and type. It is a plain text field.
-  - *Change a team's colour:* tap the colour swatch on the panel, then choose from eight presets.
-  - *Whistle:* press and hold the whistle button. It sounds for as long as it is held, and plays
-    with the ringer switch off, which is intentional for courtside use.
-  - *Reset:* the Reset button in the top bar returns the score to 0–0. Team names and colours are
-    deliberately kept.
-  - *Winner:* in volleyball and badminton, the top bar changes to "<team> wins" once the winning
-    score is reached, and further points are blocked (−1 still works, so a mis-tap that ended the
-    game early can be undone).
-  - *Back:* "‹ Sports" in the top bar returns to the sport picker.
-- Scores live in memory for the life of the screen only. Nothing is saved to disk, exported or
-  transmitted, by design.
-
-**4. External services, tools or platforms used to deliver core functionality**
-
-None. The app makes no network requests at all — it has no networking code and needs no
-connection to work. Specifically:
-
-- **Data or content providers:** none. Nothing is fetched. The four sports and their scoring
-  rules are hard-coded in the app binary.
-- **Authentication services:** none. There are no accounts.
-- **Payment processors:** none. Nothing is sold — no in-app purchases, subscriptions or ads.
-- **AI services:** none. No machine learning, on-device or remote.
-- **Analytics, attribution, crash reporting or tracking SDKs:** none.
-- **Backend or cloud storage:** none.
-
-The app is built with Expo (React Native). Everything it contains is an open-source client-side
-library compiled into the binary: expo-router (navigation), expo-audio (plays the whistle file
-bundled in the app), expo-haptics (Taptic feedback when a point is scored), and
-react-native-reanimated, react-native-gesture-handler and react-native-safe-area-context for the
-interface. The binary is compiled on Expo Application Services (EAS), which is a build service
-used at compile time only — the shipped app never contacts Expo or any other server, and
-over-the-air updates are not enabled.
-
-This is consistent with our App Privacy declaration: no data is collected.
-
-**5. Regional differences**
-
-There are none. The app behaves identically in every region and on every storefront. It contains
-no geolocation, no region or locale detection, no server, no remote configuration and no feature
-flags, so there is no mechanism by which behaviour or content could vary by region. The interface
-is English (en-US) only and is not localised. No feature or content is region-locked, and nothing
-is withheld in any territory.
-
-**6. Regulated industry or protected third-party material**
-
-Neither applies to this app.
-
-*Not a regulated industry.* It is a manual counter operated entirely by the user's taps. There is
-no gambling, betting, odds or wagering, no real-money or simulated gaming, no health, medical or
-fitness data, no financial services, and it is not directed at children (no Kids Category).
-
-*No protected third-party material.* The app contains no licensed sports content of any kind:
-
-- No league, club, federation, team, competition or player names, logos, marks or kits. "Soccer",
-  "Basketball", "Volleyball" and "Badminton" are the generic names of the sports themselves. The
-  app is not affiliated with, endorsed by or licensed from any sporting body, and claims no such
-  association anywhere in the app or its metadata.
-- No live scores, fixtures, standings, statistics or any other licensed sports data. The app has
-  no data feed. Every number on screen was typed by the user tapping the screen.
-- **Whistle sound:** a public-domain recording released under CC0 1.0 on Wikimedia Commons, which
-  I edited for this app. Source:
-  https://commons.wikimedia.org/wiki/File:218318_splicesound_referee-whistle-blow-gymnasium.wav
-- **Icons:** Material Design Icons (MaterialCommunityIcons), Apache 2.0 / SIL OFL.
-- **App icon, in-app artwork and all App Store screenshots:** created by me for this app.
+6. REGULATED INDUSTRY / PROTECTED MATERIAL
+Neither applies. It is a manual counter driven entirely by the user's taps: no gambling, betting or wagering, no real-money or simulated gaming, no health or medical data, no financial services, not directed at children. It contains no league, club, team or competition names, logos, marks or kits - "Soccer", "Basketball", "Volleyball" and "Badminton" are the generic sports - and claims no affiliation with any sporting body. No live scores, fixtures or statistics and no data feed; every number on screen was typed by the user. Whistle sound: public domain (CC0 1.0) from Wikimedia Commons, edited by me - https://commons.wikimedia.org/wiki/File:218318_splicesound_referee-whistle-blow-gymnasium.wav Icons: Material Design Icons (Apache 2.0 / SIL OFL). App icon, artwork and screenshots: created by me.
 
 Please let me know if anything further would help.
 
