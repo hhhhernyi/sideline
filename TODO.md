@@ -15,9 +15,24 @@ EAS and `ascAppId` is pinned in eas.json, so neither prompts for an Apple login:
 
 `autoIncrement` handles build numbers; `--latest` resolves to the newest finished build.
 
-## Release: App Store (submitted, awaiting review)
+## Release: App Store (rejected 15 Sep - Guideline 2.1, information needed)
 
-Version 1.0 with build 6 submitted 13 Sep 2026. Review typically takes 24-48h, and
+Version 1.0 with build 6 submitted 13 Sep 2026, **rejected 15 Sep under Guideline 2.1 -
+Information Needed**. Neither guess below was right: the rejection is the boilerplate
+questionnaire Apple sends to a developer account with "a limited App Review history", and it
+names no defect and no metadata problem. Nothing in the app or the listing has to change, and
+**no new build is needed** - build 6 stands.
+
+Answering it takes a screen recording plus six written answers, both drafted in
+`APP_REVIEW_NOTES.md`: Part 1 is the Resolution Center reply, Part 2 the same thing condensed to
+fit the 4000-character App Review Information -> Notes field, Part 3 the shot list for the
+recording. Apple asks for the answers in **both** places - the Notes field is what spares future
+submissions the same round trip, so fill it even though the reply alone would clear this one.
+
+- [ ] Record the flow on a physical iPhone, in landscape, starting from the Home Screen launch
+- [ ] Paste Part 2 into App Review Information -> Notes, with a link to the recording
+- [ ] Reply in Resolution Center with Part 1, the video attached
+
 `automaticRelease: true` in store.config.json means approval puts it live without another step.
 
 Listing metadata lives in `store.config.json` — `npx eas-cli@latest metadata:push` writes it,
@@ -35,8 +50,6 @@ them.
 - iPhone-only as of build 6. `supportsTablet: true` would have required a 13" iPad screenshot set
   and put the app in front of a reviewer on a device its layout has never run on.
 
-If rejected, the likeliest causes are the listing name being read as descriptive text or a query
-about the privacy URL. Both are metadata fixes — resubmit without a new build.
 
 ## Release: Google Play (not started)
 
