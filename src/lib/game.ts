@@ -21,6 +21,13 @@ export type MatchFormat =
       win: WinRule;
       /** What one period is called, for the summary. */
       label: string;
+      /**
+       * Sets that decide a match, in competitive play. Absent in casual play, where one game
+       * is the whole match and nothing is counting towards anything.
+       */
+      best?: number;
+      /** Volleyball's final set is to 15, not 25. Only reachable with `best` set. */
+      decider?: WinRule;
     }
   | {
       decidedBy: 'clock';
@@ -93,9 +100,25 @@ export function initialMatch(now = Date.now()): MatchState {
   };
 }
 
-/** What ends the period in play, or nothing for a sport played to the clock. */
-export function ruleFor(format: MatchFormat): WinRule | undefined {
-  return format.decidedBy === 'sets' ? format.win : undefined;
+/**
+ * What ends the given period, or nothing for a sport played to the clock. The index matters
+ * only where a sport changes the rule for its last set - volleyball's fifth is to 15.
+ */
+export function ruleFor(format: MatchFormat, index = 0): WinRule | undefined {
+  if (format.decidedBy !== 'sets') return undefined;
+  const isDecider = format.best !== undefined && index === format.best - 1;
+  return format.decider && isDecider ? format.decider : format.win;
+}
+
+/**
+ * The same rules with the competition taken out: one game rather than a best-of, one straight
+ * run of the clock rather than halves, no buzzer and no overtime. What a kickabout needs.
+ */
+export function casualFormat(format: MatchFormat): MatchFormat {
+  if (format.decidedBy === 'sets') {
+    return { decidedBy: 'sets', win: format.win, label: format.label };
+  }
+  return { ...format, count: 1, countsDown: false, overtimeMinutes: undefined };
 }
 
 /** The team that has won this period, or null while it is still live. */
@@ -114,8 +137,8 @@ export function periodWinner(period: Period, rule?: WinRule): Team | null {
  */
 export function periodsWon(state: MatchState, format: MatchFormat): Period {
   const won = emptyPeriod();
-  state.periods.forEach((period) => {
-    const winner = periodWinner(period, ruleFor(format));
+  state.periods.forEach((period, i) => {
+    const winner = periodWinner(period, ruleFor(format, i));
     if (winner) won[winner] += 1;
   });
   return won;
@@ -132,10 +155,18 @@ export function totals(state: MatchState): Period {
 /** The team that has won the match, or null while it is still live. */
 export function matchWinner(state: MatchState, format: MatchFormat): Team | null {
   if (format.decidedBy === 'sets') {
-    // No best-of to reach: winning the game in play ends the match, and playing another
-    // reopens it. Most rec matches are one game and stop there.
-    if (!state.endedAt) return null;
     const won = periodsWon(state, format);
+    if (format.best !== undefined) {
+      // Competitive: the match is decided by taking the majority of the sets, and a set ending
+      // is not the match ending.
+      const needed = Math.floor(format.best / 2) + 1;
+      if (won.home >= needed) return 'home';
+      if (won.away >= needed) return 'away';
+      return null;
+    }
+    // Casual: no best-of to reach, so winning the game in play ends the match, and playing
+    // another reopens it. Most rec matches are one game and stop there.
+    if (!state.endedAt) return null;
     if (won.home === won.away) return null;
     return won.home > won.away ? 'home' : 'away';
   }
@@ -149,7 +180,7 @@ export function matchWinner(state: MatchState, format: MatchFormat): Team | null
 
 /** Whether the live period is over and the match is waiting on the next one. */
 export function periodOver(state: MatchState, format: MatchFormat): boolean {
-  return periodWinner(state.periods[state.current], ruleFor(format)) !== null;
+  return periodWinner(state.periods[state.current], ruleFor(format, state.current)) !== null;
 }
 
 export function matchReducer(
@@ -170,17 +201,22 @@ export function matchReducer(
       );
       const next = { ...state, periods };
       if (format.decidedBy !== 'sets') return next;
-      // Winning the game ends the match there and then, so the summary has an end time without
-      // waiting for anyone to press anything - and taking that point back reopens it, because
-      // the undo exists for exactly the mis-tap that ended a game early.
-      const over = periodOver(next, format);
-      return { ...next, endedAt: over ? (state.endedAt ?? Date.now()) : null };
+      // What ends the match differs by mode: taking the last set in a best-of, or simply
+      // winning the game when there is no best-of to take. Either way it ends there and then,
+      // so the summary has an end time without waiting for anyone to press anything - and
+      // taking that point back reopens it, because the undo exists for exactly the mis-tap
+      // that ended a game early.
+      const done =
+        format.best !== undefined ? matchWinner(next, format) !== null : periodOver(next, format);
+      return { ...next, endedAt: done ? (state.endedAt ?? Date.now()) : null };
     }
     case 'advance': {
       if (format.decidedBy === 'sets') {
         // Offered only once the game in play is won, as "another game" rather than a set the
         // app was counting towards all along.
         if (!periodOver(state, format)) return state;
+        // A best-of cannot run past its own length.
+        if (format.best !== undefined && state.periods.length >= format.best) return state;
         return {
           ...state,
           periods: [...state.periods, emptyPeriod()],

@@ -16,12 +16,14 @@ import { useTheme } from '@/hooks/use-theme';
 import { useWhistle } from '@/hooks/use-whistle';
 import { readClock } from '@/lib/clock';
 import {
+  casualFormat,
   clockLabel,
   initialMatch,
   matchReducer,
   matchWinner,
   periodName,
   periodOver,
+  periodsWon,
   totals,
   type MatchAction,
   type MatchFormat,
@@ -65,6 +67,11 @@ export default function GameScreen() {
   });
   const [picking, setPicking] = useState<Team | null>(null);
   const [sheet, setSheet] = useState<Sheet>(null);
+  /**
+   * Whether this match is being played to the sport's real rules - sets, halves, quarters, a
+   * clock that runs out - or casually, where the only structure is a clock counting up.
+   */
+  const [competitive, setCompetitive] = useState(false);
   // Where on the match clock the period in play began. The clock itself always times the whole
   // match, so the summary can say how long the thing took; a half is the slice since this mark.
   const [periodStart, setPeriodStart] = useState(0);
@@ -74,13 +81,13 @@ export default function GameScreen() {
   const [periods, setPeriods] = useState(base.decidedBy === 'clock' ? base.count : 0);
   const [length, setLength] = useState(base.decidedBy === 'clock' ? base.minutes : 0);
 
-  // The sport's format with this match's choices folded in, so everything downstream - the
-  // reducer, the period names, the clock - reads one shape and never has to ask which of the
-  // two is in charge.
-  const format = useMemo<MatchFormat>(
-    () => (base.decidedBy === 'clock' ? { ...base, count: periods, minutes: length } : base),
-    [base, periods, length],
-  );
+  // The rules this match is actually played under: the sport's own, with this match's choices
+  // folded in, or the same rules with the competition taken out. Everything downstream - the
+  // reducer, the period names, the clock - reads this one shape.
+  const format = useMemo<MatchFormat>(() => {
+    if (!competitive) return casualFormat(base);
+    return base.decidedBy === 'clock' ? { ...base, count: periods, minutes: length } : base;
+  }, [base, competitive, periods, length]);
 
   const [match, dispatch] = useReducer(
     useCallback((s: MatchState, a: MatchAction) => matchReducer(s, a, format), [format]),
@@ -91,16 +98,18 @@ export default function GameScreen() {
   const bySets = format.decidedBy === 'sets';
   const countsDown = format.decidedBy === 'clock' && format.countsDown;
   // Overtime periods sit past the match's own count, and run shorter than the parts before.
-  const overtime = !bySets && match.current >= periods;
+  const overtime = !bySets && competitive && match.current >= periods;
   const overtimeMinutes = format.decidedBy === 'clock' ? format.overtimeMinutes : undefined;
-  const periodMinutes = overtime ? (overtimeMinutes ?? length) : length;
+  // Casual play has no period to run out, so there is no length to run it to.
+  const periodMinutes = !competitive || bySets ? 0 : overtime ? (overtimeMinutes ?? length) : length;
 
   // Where the clock stops. A half ends on 45:00 and stays there until added time is signalled;
-  // a quarter ends on the buzzer. A sport played to a score has no limit - its clock is just
-  // timing the session.
-  const limit = bySets
-    ? undefined
-    : periodStart + (periodMinutes + (countsDown ? 0 : added)) * 60_000;
+  // a quarter ends on the buzzer. Casual play and sports played to a score have no limit -
+  // their clock is just timing the session.
+  const limit =
+    periodMinutes > 0
+      ? periodStart + (periodMinutes + (countsDown ? 0 : added)) * 60_000
+      : undefined;
   const clock = useClock(limit);
 
   const editTeam = (team: Team, patch: Partial<TeamMeta>) =>
@@ -112,18 +121,28 @@ export default function GameScreen() {
   // reads 2-1 overall and never 1-0 for this half.
   const shown = bySets ? match.periods[match.current] : totals(match);
   const locked = winner !== null || (bySets && setOver);
-  const periodMs = bySets ? clock.ms : clock.ms - periodStart;
+  const periodMs = bySets || !competitive ? clock.ms : clock.ms - periodStart;
   const reading = readClock(format, periodMs, periodMinutes, added);
   const total = totals(match);
+  const sets = periodsWon(match, format);
   // Added time is offered once the regulation part has been played out, which is when a fourth
   // official would raise the board. Only a clock that counts up has anywhere to put it.
   const canAddTime =
-    !bySets && !countsDown && periodMinutes > 0 && periodMs >= periodMinutes * 60_000;
+    competitive && !bySets && !countsDown && periodMinutes > 0 && periodMs >= periodMinutes * 60_000;
   // How the match is played is settled between periods, never mid-play, so the control is there
   // while the clock sits at zero and gone the moment it starts.
-  const canSetUp = !bySets && !match.endedAt && periodMs === 0 && !clock.running;
+  const canSetUp = competitive && !bySets && !match.endedAt && periodMs === 0 && !clock.running;
   // Basketball has no draw: a level game at the final buzzer goes to another period.
-  const canGoToOvertime = !bySets && !!overtimeMinutes && match.endedAt !== null && total.home === total.away;
+  const canGoToOvertime =
+    competitive && !bySets && !!overtimeMinutes && match.endedAt !== null && total.home === total.away;
+  // The mode changes what a set or a half even is, so it is only switchable before anything has
+  // happened - a half-played best-of-five has nowhere to go if the rules change underneath it.
+  const untouched =
+    match.periods.length === 1 &&
+    match.periods[0].home === 0 &&
+    match.periods[0].away === 0 &&
+    clock.ms === 0 &&
+    !clock.running;
 
   const score = (team: Team, delta: number) => {
     // Once the period or match is decided, stop adding points - but let -1 through, so a
@@ -145,12 +164,13 @@ export default function GameScreen() {
     setAdded(0);
   };
 
-  // What the period control does next, or null when there is nothing to advance to. For a set
-  // sport it only appears once the game is won, and offers another one rather than counting
-  // towards a best-of nobody agreed to.
+  // What the period control does next, or null when there is nothing to advance to. In casual
+  // play the only thing to do is call it a day.
   const advanceLabel = (() => {
+    if (winner) return canGoToOvertime ? 'Overtime' : null;
     if (bySets) return setOver ? `New ${format.label}` : null;
     if (match.endedAt) return canGoToOvertime ? 'Overtime' : null;
+    if (!competitive) return 'Finish';
     const last = match.current >= periods - 1;
     return last ? 'Finish' : `End ${clockLabel(periods)}`;
   })();
@@ -164,7 +184,7 @@ export default function GameScreen() {
     dispatch({ type: 'advance' });
     // A set sport keeps one clock for the whole session - the next game is not a new period to
     // time. A clocked one stops at the whistle and the next period starts from here.
-    if (!bySets) closePeriod();
+    if (!bySets && competitive) closePeriod();
   };
 
   const reset = () => {
@@ -182,15 +202,16 @@ export default function GameScreen() {
     );
   }
 
-  const caption = winner
-    ? `${teams[winner].name} wins`
-    : bySets
-      ? `${sport.name} · to ${format.win.to}`
-      : reading.expired
-        ? `${overtime || periods > 1 ? `${periodName(format, match.current)} · ` : ''}time up`
-        : periods > 1 || overtime
-          ? `${sport.name} · ${periodName(format, match.current)}`
-          : sport.name;
+  // Competitive play is counting something, so it says what: the set score, or which half it
+  // is. Casual play is not, so it says the sport and nothing else.
+  const caption = (() => {
+    if (winner) return `${teams[winner].name} wins${bySets && competitive ? ` ${sets.home}-${sets.away}` : ''}`;
+    if (!competitive) return sport.name;
+    if (bySets) return `${periodName(format, match.current)} · ${sets.home}-${sets.away}`;
+    if (reading.expired) return `${periodName(format, match.current)} · time up`;
+    if (periods > 1 || overtime) return `${sport.name} · ${periodName(format, match.current)}`;
+    return sport.name;
+  })();
 
   return (
     // The picker overlay is a sibling of the padded content so it can cover the full screen,
@@ -215,6 +236,21 @@ export default function GameScreen() {
             hitSlop={12}>
             <Text style={[styles.navText, { color: c.text }]}>‹ Sports</Text>
           </Pressable>
+
+          {untouched ? (
+            <Pressable
+              style={[
+                styles.modeBtn,
+                CardShadow,
+                { backgroundColor: competitive ? c.accent : c.card },
+              ]}
+              onPress={() => setCompetitive((on) => !on)}
+              hitSlop={12}>
+              <Text style={[styles.modeText, { color: competitive ? c.text : c.textSecondary }]}>
+                {competitive ? 'COMPETITIVE' : 'CASUAL'}
+              </Text>
+            </Pressable>
+          ) : null}
 
           {/* The whole clock is the start/pause control - a referee starting a half should not
               have to find a small button. */}
@@ -368,6 +404,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   navText: { fontSize: 17, fontWeight: '700' },
+  modeBtn: {
+    width: 148,
+    height: NAV_BTN_HEIGHT,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modeText: { fontSize: 13, fontWeight: '800', letterSpacing: 0.8 },
   // Takes the space between the buttons, so the clock stays centred on the screen.
   clock: {
     flex: 1,

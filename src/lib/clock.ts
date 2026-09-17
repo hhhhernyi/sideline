@@ -33,7 +33,9 @@ export function formatClock(ms: number): string {
  * is 45:00 until added time is signalled, which moves the end and lets it run on.
  */
 export function readClock(format: MatchFormat, ms: number, minutes = 0, added = 0): Reading {
-  if (format.decidedBy === 'sets') {
+  // Nothing to run out: a sport played to a score, or casual play, where the clock is only
+  // telling you how long you have been at it.
+  if (format.decidedBy === 'sets' || minutes <= 0) {
     return { text: formatClock(ms), added: null, expired: false };
   }
   const full = minutes * 60_000;
