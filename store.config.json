@@ -7,23 +7,24 @@
     },
     "info": {
       "en-US": {
-        "description": "Scoreboard! turns your phone into a clean, readable scoreboard for the game in front of you.\n\nPick a sport, name the teams, and start counting. No account, no sign-up, no setup.\n\nFOUR SPORTS\nSoccer, basketball, volleyball and badminton. Basketball gets one, two and three point buttons. Volleyball ends at 25 and badminton at 21, both win-by-two, with badminton capped at 30 the way a real game is.\n\nBUILT TO BE READ ACROSS A PITCH\nBig landscape scores, high contrast, and team panels you tap anywhere to score.\n\nMAKE IT YOUR MATCH\nRename Home and Away to the actual teams, and pick each side's colour from eight presets.\n\nA REAL WHISTLE\nHold the whistle button to blow for as long as you need, so a full-time short-short-long sounds right. It works with the ringer switch off, because that is where phones live courtside.\n\nNOTHING IS COLLECTED\nNo accounts, no analytics, no tracking, and no network access. Scores live on your phone for as long as the match does.\n",
+        "description": "Sideline is a scoreboard for the game actually in front of you - a rec game on a booked court, or a fixture being officiated properly. It asks which one before you start, and then gets out of the way.\n\nCASUAL OR COMPETITIVE\nCasual play is one game, one clock counting up, and nothing else: no halves, no set counter, no buzzer. Sides get repicked, people wander off, and nothing is counting towards anything.\n\nTurn on Competitive and the sport's real rules arrive. Volleyball is best of five with the fifth set played to 15. Badminton is best of three to 21, win by two, stopping at 30. Soccer has halves that end on 45:00 and stay there until you signal added time. Basketball has quarters counting down to the buzzer, and goes to overtime rather than pretending a tie is a result.\n\nHOW LONG, AND HOW MANY PARTS\nPlay it straight through, in halves, or in quarters - and for as long as the court is booked for, not for as long as the rulebook says. Pick from the usual lengths or type in your own.\n\nA MATCH LOG, NOT JUST A SCORE\nWrite down what happened while it is happening. Every note keeps the score, the period and the clock at the moment you wrote it, so \"21-19, Set 2, 14:20 - review whether the block was touched\" is still legible after the match, when it matters.\n\nYOUR MATCHES ARE KEPT\nGames are saved as they are played - not when they end - so a match survives the phone being pocketed, locked, or closed mid-game. History keeps the date, the sport, the teams, the scoreline set by set, how long it ran and every note. Send one to the group chat as plain text, or delete it.\n\nBUILT TO BE READ ACROSS A PITCH\nBig landscape scores, high contrast, team panels you tap anywhere to score. Rename the teams and pick each side's colour.\n\nA REAL WHISTLE\nHold the whistle button to blow for as long as you need, so a full-time short-short-long sounds right. It works with the ringer switch off, because that is where phones live courtside.\n\nNOTHING IS COLLECTED\nNo accounts, no sign-up, no analytics, no tracking, and no network access at all. Your matches are on your phone and nowhere else, and the only thing that ever leaves is a summary you choose to send.\n",
         "keywords": [
           "scoreboard",
           "score",
           "keeper",
-          "tally",
+          "referee",
+          "whistle",
+          "timer",
+          "match",
           "soccer",
           "basketball",
           "volleyball",
           "badminton",
-          "referee",
-          "whistle",
-          "match"
+          "coach"
         ],
         "supportUrl": "https://hhhhernyi.github.io/scoreboard-privacy/",
-        "title": "Scoreboard - All Sports",
-        "subtitle": "Tap to score, hold to whistle",
+        "title": "Sideline Scoreboard",
+        "subtitle": "Score, time and log a match",
         "privacyPolicyUrl": "https://hhhhernyi.github.io/scoreboard-privacy/"
       }
     },

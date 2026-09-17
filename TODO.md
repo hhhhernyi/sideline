@@ -15,7 +15,22 @@ EAS and `ascAppId` is pinned in eas.json, so neither prompts for an Apple login:
 
 `autoIncrement` handles build numbers; `--latest` resolves to the newest finished build.
 
-## Release: App Store (answered the 2.1 questionnaire, back in review 15 Sep)
+## Release: App Store (rejected 4.3(a), build 7 in progress)
+
+**Rejected again on 17 Sep under Guideline 4.3(a) - Design - Spam**, after the 2.1 answer had
+cleared. That one is real and is answered in `APP_REVIEW_4_3.md`: what the rejection actually
+says, what changed for build 7, the Resolution Center reply, the recording shot list, and the
+submission checklist.
+
+The short version: build 6 was a 717-line score counter, and the reviewer was not wrong. Build 7
+splits casual from competitive play, keeps a match log with the score and clock attached to every
+note, and files matches to the device as they are played. The listing is renamed from the keyword
+string "Scoreboard - All Sports" to **Sideline Scoreboard**.
+
+**Do not resubmit build 6 with a letter.** The rejection carries the Extended Review paragraph,
+which is account-level; a failed retry on an unchanged binary is what escalates it.
+
+## Release: App Store - the 2.1 round (done, 15 Sep)
 
 Version 1.0 with build 6 submitted 13 Sep 2026, **rejected 15 Sep under Guideline 2.1 -
 Information Needed**. Neither guess below was right: the rejection is the boilerplate
