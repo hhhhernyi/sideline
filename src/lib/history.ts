@@ -49,7 +49,14 @@ export async function loadMatches(): Promise<MatchRecord[]> {
     const raw = await Storage.getItemAsync(KEY);
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as MatchRecord[]) : [];
+    if (!Array.isArray(parsed)) return [];
+    // Matches filed before the scoreline was split into a headline and its parts. Carried over
+    // rather than dropped: a record of a game that was played should outlive a refactor.
+    return (parsed as (MatchRecord & { scoreline?: string })[]).map((m) =>
+      m.headline === undefined && m.scoreline
+        ? { ...m, headline: m.scoreline, parts: '' }
+        : m,
+    );
   } catch {
     return [];
   }
