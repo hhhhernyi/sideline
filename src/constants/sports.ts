@@ -44,15 +44,9 @@ export const SPORTS: Sport[] = [
     icon: 'volleyball',
     tint: '#FAE7BE',
     increments: [1],
-    // Sets run to 25 win-by-2 with no ceiling - 30-28 and 33-31 are both legal - but a match
-    // that reaches a fifth set plays it to 15.
-    format: {
-      decidedBy: 'sets',
-      best: 5,
-      win: { to: 25, by: 2 },
-      decider: { to: 15, by: 2 },
-      label: 'Set',
-    },
+    // A set runs to 25 win-by-2 with no ceiling - 30-28 and 33-31 are both legal. How many
+    // sets make a match is not the app's business: rec games stop after one.
+    format: { decidedBy: 'sets', win: { to: 25, by: 2 }, label: 'Set' },
   },
   {
     id: 'badminton',
@@ -60,9 +54,9 @@ export const SPORTS: Sport[] = [
     icon: 'badminton',
     tint: '#D9E8F2',
     increments: [1],
-    // Badminton is played in games, not sets: best of 3 to 21 win-by-2, stopping at 30, where
-    // 30-29 takes it. Every game uses the same rule, so there is no decider.
-    format: { decidedBy: 'sets', best: 3, win: { to: 21, by: 2, cap: 30 }, label: 'Game' },
+    // Badminton is played in games, not sets: to 21 win-by-2, stopping at 30, where 30-29
+    // takes it.
+    format: { decidedBy: 'sets', win: { to: 21, by: 2, cap: 30 }, label: 'Game' },
   },
 ];
 

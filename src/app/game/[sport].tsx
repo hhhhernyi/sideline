@@ -17,7 +17,6 @@ import {
   matchWinner,
   periodName,
   periodOver,
-  periodsWon,
   totals,
   type MatchAction,
   type MatchFormat,
@@ -65,7 +64,6 @@ export default function GameScreen() {
   // A set sport shows the set in play; a clocked one shows the match, because a soccer board
   // reads 2-1 overall and never 1-0 for this half.
   const shown = bySets ? match.periods[match.current] : totals(match);
-  const sets = periodsWon(match, format);
   const locked = winner !== null || (bySets && setOver);
 
   const score = (team: Team, delta: number) => {
@@ -81,11 +79,12 @@ export default function GameScreen() {
     dispatch({ type: 'score', team, delta });
   };
 
-  // What the period control does next, or null when there is nothing to advance to: a set
-  // still in play, or a match already over.
+  // What the period control does next, or null when there is nothing to advance to. For a set
+  // sport it only appears once the game is won, and offers another one rather than counting
+  // towards a best-of nobody agreed to.
   const advance = (() => {
-    if (winner || match.endedAt) return null;
-    if (bySets) return setOver ? `Next ${format.label}` : null;
+    if (bySets) return setOver ? `New ${format.label}` : null;
+    if (match.endedAt) return null;
     const last = match.current >= format.count - 1;
     return last ? 'Finish' : `End ${format.label}`;
   })();
@@ -129,9 +128,9 @@ export default function GameScreen() {
             ]}
             numberOfLines={1}>
             {winner
-              ? `${teams[winner].name} wins${bySets ? ` ${sets.home}-${sets.away}` : ''}`
+              ? `${teams[winner].name} wins`
               : bySets
-                ? `${periodName(format, match.current)} · ${sets.home}-${sets.away}`
+                ? `${sport.name} · to ${format.win.to}`
                 : `${sport.name} · ${periodName(format, match.current)}`}
           </Text>
           <Pressable
