@@ -62,6 +62,11 @@ export type Note = {
   id: number;
   /** Wall clock when it was logged, for ordering and for the summary. */
   at: number;
+  /**
+   * The match clock when it was logged. Kept separately from `at` because a referee means
+   * "the 14th minute", not the time of day, and the two diverge the moment the clock pauses.
+   */
+  clock: number;
   /** Index into `periods`. */
   period: number;
   score: Period;
@@ -83,7 +88,7 @@ export type MatchAction =
   | { type: 'score'; team: Team; delta: number }
   | { type: 'advance' }
   | { type: 'overtime' }
-  | { type: 'note'; text: string }
+  | { type: 'note'; text: string; clock: number }
   | { type: 'finish' }
   | { type: 'reset' };
 
@@ -251,8 +256,11 @@ export function matchReducer(
       const note: Note = {
         id: state.nextNoteId,
         at: Date.now(),
+        clock: action.clock,
         period: state.current,
-        score: { ...state.periods[state.current] },
+        // What the board read, which is the set in play for a set sport and the match total
+        // for a clocked one - not the raw period score, which would say 1-0 under a 2-1 board.
+        score: format.decidedBy === 'sets' ? { ...state.periods[state.current] } : totals(state),
         text,
       };
       return { ...state, notes: [...state.notes, note], nextNoteId: state.nextNoteId + 1 };

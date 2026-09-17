@@ -8,13 +8,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ColorPicker } from '@/components/color-picker';
 import { MatchSetup } from '@/components/match-setup';
 import { MinutesSheet } from '@/components/minutes-sheet';
+import { NotesSheet, type NoteLine } from '@/components/notes-sheet';
 import { TeamPanel } from '@/components/team-panel';
 import { getSport } from '@/constants/sports';
 import { CardShadow, Colors, Spacing, TeamColors } from '@/constants/theme';
 import { useClock } from '@/hooks/use-clock';
 import { useTheme } from '@/hooks/use-theme';
 import { useWhistle } from '@/hooks/use-whistle';
-import { readClock } from '@/lib/clock';
+import { formatClock, readClock } from '@/lib/clock';
 import {
   casualFormat,
   clockLabel,
@@ -48,7 +49,7 @@ const NO_FORMAT: MatchFormat = {
 };
 
 type TeamMeta = { name: string; color: string };
-type Sheet = 'setup' | 'added' | null;
+type Sheet = 'setup' | 'added' | 'notes' | null;
 
 export default function GameScreen() {
   const { sport: sportId } = useLocalSearchParams<{ sport: string }>();
@@ -143,6 +144,30 @@ export default function GameScreen() {
     match.periods[0].away === 0 &&
     clock.ms === 0 &&
     !clock.running;
+
+  // The clock as the board is showing it, so a note logged now reads back the same figure -
+  // for a counted-down quarter that is the time left, not the time played.
+  const shownClockMs =
+    countsDown && periodMinutes > 0 ? Math.max(0, periodMinutes * 60_000 - periodMs) : periodMs;
+
+  /** "1st Half", "Set 2", or nothing at all when the match has no parts to name. */
+  const partName = (index: number) => {
+    if (!competitive) return '';
+    if (bySets) return periodName(format, index);
+    return periods > 1 || index >= periods ? periodName(format, index) : '';
+  };
+
+  const noteContext = [partName(match.current), `${shown.home}-${shown.away}`, reading.text]
+    .filter(Boolean)
+    .join(' · ');
+
+  const noteLines: NoteLine[] = match.notes.map((note) => ({
+    id: note.id,
+    meta: [partName(note.period), `${note.score.home}-${note.score.away}`, formatClock(note.clock)]
+      .filter(Boolean)
+      .join(' · '),
+    text: note.text,
+  }));
 
   const score = (team: Team, delta: number) => {
     // Once the period or match is decided, stop adding points - but let -1 through, so a
@@ -335,6 +360,17 @@ export default function GameScreen() {
               </Text>
             </Pressable>
           ) : null}
+          <Pressable
+            style={[styles.noteBtn, CardShadow, { backgroundColor: c.card }]}
+            onPress={() => setSheet('notes')}
+            hitSlop={12}>
+            <MaterialCommunityIcons name="note-text-outline" size={22} color={c.text} />
+            {match.notes.length > 0 ? (
+              <Text style={[styles.noteCount, { color: c.textSecondary }]}>
+                {match.notes.length}
+              </Text>
+            ) : null}
+          </Pressable>
           {/* Hold to sustain the blast. Safe to use Pressable's function form here - this one
               is not inside a Link asChild, where Slot would spread the function away. */}
           <Pressable
@@ -374,6 +410,14 @@ export default function GameScreen() {
           setAdded(minutes);
           setSheet(null);
         }}
+        onClose={() => setSheet(null)}
+      />
+
+      <NotesSheet
+        visible={sheet === 'notes'}
+        context={noteContext}
+        lines={noteLines}
+        onAdd={(text) => dispatch({ type: 'note', text, clock: shownClockMs })}
         onClose={() => setSheet(null)}
       />
 
@@ -439,6 +483,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   shortPill: { minWidth: 130 },
+  noteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    minWidth: 60,
+    height: 52,
+    paddingHorizontal: Spacing.md,
+    borderRadius: 999,
+  },
+  noteCount: { fontSize: 15, fontWeight: '800' },
   pillText: { fontSize: 16, fontWeight: '800', letterSpacing: 0.5 },
   whistleBtn: {
     flexDirection: 'row',
