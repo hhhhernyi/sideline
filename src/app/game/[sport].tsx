@@ -1,7 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useReducer, useState } from 'react';
+import { useCallback, useReducer, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,22 +11,42 @@ import { getSport } from '@/constants/sports';
 import { CardShadow, Colors, Spacing, TeamColors } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useWhistle } from '@/hooks/use-whistle';
-import { gameReducer, getWinner, initialGame, type Team } from '@/lib/game';
+import {
+  initialMatch,
+  matchReducer,
+  matchWinner,
+  periodName,
+  periodOver,
+  periodsWon,
+  totals,
+  type MatchAction,
+  type MatchFormat,
+  type MatchState,
+  type Team,
+} from '@/lib/game';
 
 /** Back and Reset are the same shape, so the longer label sets the width for both. */
 const NAV_BTN_WIDTH = 132;
 const NAV_BTN_HEIGHT = 46;
+
+/** Stands in for an unknown sport so the hooks below stay unconditional. Never rendered. */
+const NO_FORMAT: MatchFormat = { decidedBy: 'clock', count: 1, minutes: 0, label: 'Period' };
 
 type TeamMeta = { name: string; color: string };
 
 export default function GameScreen() {
   const { sport: sportId } = useLocalSearchParams<{ sport: string }>();
   const sport = getSport(sportId);
+  const format = sport?.format ?? NO_FORMAT;
   const c = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const whistle = useWhistle();
-  const [game, dispatch] = useReducer(gameReducer, initialGame);
+  const [match, dispatch] = useReducer(
+    useCallback((s: MatchState, a: MatchAction) => matchReducer(s, a, format), [format]),
+    undefined,
+    () => initialMatch(),
+  );
 
   // Names and colours are the user's setup for the match, not part of the score, so Reset
   // leaves them alone and they live outside the reducer.
@@ -39,12 +59,19 @@ export default function GameScreen() {
   const editTeam = (team: Team, patch: Partial<TeamMeta>) =>
     setTeams((prev) => ({ ...prev, [team]: { ...prev[team], ...patch } }));
 
-  const winner = getWinner(game, sport?.win);
+  const winner = matchWinner(match, format);
+  const bySets = format.decidedBy === 'sets';
+  const setOver = periodOver(match, format);
+  // A set sport shows the set in play; a clocked one shows the match, because a soccer board
+  // reads 2-1 overall and never 1-0 for this half.
+  const shown = bySets ? match.periods[match.current] : totals(match);
+  const sets = periodsWon(match, format);
+  const locked = winner !== null || (bySets && setOver);
 
   const score = (team: Team, delta: number) => {
-    // Once the game is decided, stop adding points - but let -1 through, so a mis-tap that
-    // ended the game early can still be taken back.
-    if (winner && delta > 0) return;
+    // Once the period or match is decided, stop adding points - but let -1 through, so a
+    // mis-tap that ended it early can still be taken back.
+    if (locked && delta > 0) return;
     // Taking a point back should not feel the same as scoring one, so the two use different
     // impacts. Fire and forget - haptics are unavailable on some devices and all of the web,
     // and a missing buzz is never worth failing a score on.
@@ -53,6 +80,15 @@ export default function GameScreen() {
     ).catch(() => {});
     dispatch({ type: 'score', team, delta });
   };
+
+  // What the period control does next, or null when there is nothing to advance to: a set
+  // still in play, or a match already over.
+  const advance = (() => {
+    if (winner || match.endedAt) return null;
+    if (bySets) return setOver ? `Next ${format.label}` : null;
+    const last = match.current >= format.count - 1;
+    return last ? 'Finish' : `End ${format.label}`;
+  })();
 
   if (!sport) {
     return (
@@ -86,13 +122,17 @@ export default function GameScreen() {
             <Text style={[styles.navText, { color: c.text }]}>‹ Sports</Text>
           </Pressable>
           <Text
-            style={[styles.title, winner ? styles.titleWon : null, { color: winner ? c.text : c.textSecondary }]}
+            style={[
+              styles.title,
+              winner ? styles.titleWon : null,
+              { color: winner ? c.text : c.textSecondary },
+            ]}
             numberOfLines={1}>
             {winner
-              ? `${teams[winner].name} wins`
-              : sport.win
-                ? `${sport.name} · to ${sport.win.to}`
-                : sport.name}
+              ? `${teams[winner].name} wins${bySets ? ` ${sets.home}-${sets.away}` : ''}`
+              : bySets
+                ? `${periodName(format, match.current)} · ${sets.home}-${sets.away}`
+                : `${sport.name} · ${periodName(format, match.current)}`}
           </Text>
           <Pressable
             style={[styles.navBtn, CardShadow, { backgroundColor: c.card }]}
@@ -108,18 +148,26 @@ export default function GameScreen() {
               key={team}
               name={teams[team].name}
               onNameChange={(name) => editTeam(team, { name })}
-              score={game[team]}
+              score={shown[team]}
               color={teams[team].color}
               onPickColor={() => setPicking(team)}
               increments={sport.increments}
               onScore={(delta) => score(team, delta)}
-              locked={winner !== null}
+              locked={locked}
               won={winner === team}
             />
           ))}
         </View>
 
         <View style={styles.footer}>
+          {advance ? (
+            <Pressable
+              style={[styles.periodBtn, CardShadow, { backgroundColor: c.card }]}
+              onPress={() => dispatch({ type: 'advance' })}
+              hitSlop={12}>
+              <Text style={[styles.periodText, { color: c.text }]}>{advance}</Text>
+            </Pressable>
+          ) : null}
           {/* Hold to sustain the blast. Safe to use Pressable's function form here - this one
               is not inside a Link asChild, where Slot would spread the function away. */}
           <Pressable
@@ -167,7 +215,16 @@ const styles = StyleSheet.create({
   title: { flex: 1, fontSize: 16, fontWeight: '600', textAlign: 'center' },
   titleWon: { fontSize: 18, fontWeight: '800' },
   teams: { flex: 1, flexDirection: 'row', gap: Spacing.md },
-  footer: { alignItems: 'center' },
+  footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.md },
+  periodBtn: {
+    minWidth: 150,
+    height: 52,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  periodText: { fontSize: 16, fontWeight: '800', letterSpacing: 0.5 },
   whistleBtn: {
     flexDirection: 'row',
     alignItems: 'center',
