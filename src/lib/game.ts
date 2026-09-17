@@ -282,8 +282,7 @@ export function matchReducer(
  * has more than one part to break down. A set sport leads with sets won where there is a
  * best-of to win, and with the points otherwise, because a single rec game to 21 is the match.
  */
-export function scoreline(state: MatchState, format: MatchFormat): string {
-  const parts = state.periods.map((p) => `${p.home}-${p.away}`).join(', ');
+export function scoreHeadline(state: MatchState, format: MatchFormat): string {
   const headline =
     format.decidedBy !== 'sets'
       ? totals(state)
@@ -293,8 +292,20 @@ export function scoreline(state: MatchState, format: MatchFormat): string {
         format.best !== undefined || state.periods.length > 1
         ? periodsWon(state, format)
         : state.periods[state.current];
-  const line = `${headline.home} - ${headline.away}`;
-  return state.periods.length > 1 ? `${line} (${parts})` : line;
+  return `${headline.home} - ${headline.away}`;
+}
+
+/** "25-22, 21-25, 15-13" - every part played, or empty where there was only one. */
+export function scoreParts(state: MatchState): string {
+  return state.periods.length > 1
+    ? state.periods.map((p) => `${p.home}-${p.away}`).join(', ')
+    : '';
+}
+
+export function scoreline(state: MatchState, format: MatchFormat): string {
+  const headline = scoreHeadline(state, format);
+  const parts = scoreParts(state);
+  return parts ? `${headline} (${parts})` : headline;
 }
 
 /**

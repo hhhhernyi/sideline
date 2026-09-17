@@ -1,5 +1,6 @@
 import { DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Colors } from '@/constants/theme';
 
@@ -12,9 +13,13 @@ const theme = {
 // bar, both of which need the full width. Orientation is locked app-wide in app.json.
 export default function RootLayout() {
   return (
-    <ThemeProvider value={theme}>
-      <Stack screenOptions={{ headerShown: false }} />
-      <StatusBar style="dark" />
-    </ThemeProvider>
+    // The root has to be here for gesture-driven rows to receive touches - swipe-to-delete in
+    // history goes dead without it, silently.
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider value={theme}>
+        <Stack screenOptions={{ headerShown: false }} />
+        <StatusBar style="dark" />
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }

@@ -26,7 +26,8 @@ import {
   periodName,
   periodOver,
   periodsWon,
-  scoreline,
+  scoreHeadline,
+  scoreParts,
   totals,
   type MatchAction,
   type MatchFormat,
@@ -133,10 +134,17 @@ export default function GameScreen() {
   const reading = readClock(format, periodMs, periodMinutes, added);
   const total = totals(match);
   const sets = periodsWon(match, format);
-  // Added time is offered once the regulation part has been played out, which is when a fourth
-  // official would raise the board. Only a clock that counts up has anywhere to put it.
+  // Added time is there for the whole half, not just once 45:00 has come and gone. Time gets
+  // lost at the injury, not at the whistle, and a referee tracking it wants somewhere to put it
+  // while it is happening. Only a clock that counts up has anywhere to put it, and only once
+  // the half is under way - before kick-off the footer belongs to the setup pill.
   const canAddTime =
-    competitive && !bySets && !countsDown && periodMinutes > 0 && periodMs >= periodMinutes * 60_000;
+    competitive &&
+    !bySets &&
+    !countsDown &&
+    periodMinutes > 0 &&
+    !match.endedAt &&
+    (clock.running || periodMs > 0);
   // How the match is played is settled between periods, never mid-play, so the control is there
   // while the clock sits at zero and gone the moment it starts.
   const canSetUp = competitive && !bySets && !match.endedAt && periodMs === 0 && !clock.running;
@@ -192,7 +200,8 @@ export default function GameScreen() {
       competitive,
       home: { name: teams.home.name, color: teams.home.color },
       away: { name: teams.away.name, color: teams.away.color },
-      scoreline: scoreline(match, format),
+      headline: scoreHeadline(match, format),
+      parts: scoreParts(match),
       periods: match.periods,
       partNames: match.periods.map((_, i) => partName(i)),
       durationMs: clock.ms,

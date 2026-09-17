@@ -1,7 +1,15 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 
 import { CardShadow, Spacing } from '@/constants/theme';
+import { useKeyboardHeight } from '@/hooks/use-keyboard';
 import { useTheme } from '@/hooks/use-theme';
 import { clockLabel } from '@/lib/game';
 
@@ -36,9 +44,14 @@ type Props = {
  */
 export function MatchSetup({ visible, periods, minutes, lengths, onChange, onClose }: Props) {
   const c = useTheme();
+  const keyboard = useKeyboardHeight();
+  const { height: screen } = useWindowDimensions();
   const [other, setOther] = useState('');
 
   if (!visible) return null;
+
+  // Lifted clear of the keyboard rather than centred behind it - see the notes sheet.
+  const room = screen - keyboard - Spacing.lg * 2;
 
   const submitOther = () => {
     const typed = Number.parseInt(other, 10);
@@ -51,8 +64,12 @@ export function MatchSetup({ visible, periods, minutes, lengths, onChange, onClo
 
   return (
     // Tapping anywhere off the card dismisses, so the sheet needs no cancel button.
-    <Pressable style={styles.backdrop} onPress={onClose}>
-      <Pressable style={[styles.card, CardShadow, { backgroundColor: c.card }]} onPress={() => {}}>
+    <Pressable
+      style={[styles.backdrop, keyboard > 0 ? styles.backdropLifted : null]}
+      onPress={onClose}>
+      <Pressable
+        style={[styles.card, CardShadow, { backgroundColor: c.card, maxHeight: room }]}
+        onPress={() => {}}>
         <Text style={[styles.heading, { color: c.textSecondary }]}>Play it as</Text>
         <View style={styles.row}>
           {SPLITS.map((split) => (
@@ -117,6 +134,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: Spacing.lg,
   },
+  backdropLifted: { justifyContent: 'flex-start' },
   card: { borderRadius: 24, padding: Spacing.lg, gap: Spacing.sm, maxWidth: 560 },
   heading: { fontSize: 13, fontWeight: '700', textAlign: 'center', letterSpacing: 0.5 },
   row: {

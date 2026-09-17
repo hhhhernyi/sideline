@@ -1,7 +1,16 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 
 import { CardShadow, Spacing } from '@/constants/theme';
+import { useKeyboardHeight } from '@/hooks/use-keyboard';
 import { useTheme } from '@/hooks/use-theme';
 
 /** A note as the sheet shows it: what the board read, and what was written about it. */
@@ -29,9 +38,16 @@ type Props = {
  */
 export function NotesSheet({ visible, context, lines, onAdd, onClose }: Props) {
   const c = useTheme();
+  const keyboard = useKeyboardHeight();
+  const { height: screen } = useWindowDimensions();
   const [text, setText] = useState('');
 
   if (!visible) return null;
+
+  // With the keyboard up the card is pinned to the top of what is left of the screen rather
+  // than centred in a space that no longer exists. The field sits above the log, so it stays
+  // in view and the log takes whatever room is left - and scrolls once there is more of it.
+  const room = screen - keyboard - Spacing.lg * 2;
 
   const submit = () => {
     const trimmed = text.trim();
@@ -42,8 +58,12 @@ export function NotesSheet({ visible, context, lines, onAdd, onClose }: Props) {
 
   return (
     // Tapping anywhere off the card dismisses, so the sheet needs no cancel button.
-    <Pressable style={styles.backdrop} onPress={onClose}>
-      <Pressable style={[styles.card, CardShadow, { backgroundColor: c.card }]} onPress={() => {}}>
+    <Pressable
+      style={[styles.backdrop, keyboard > 0 ? styles.backdropLifted : null]}
+      onPress={onClose}>
+      <Pressable
+        style={[styles.card, CardShadow, { backgroundColor: c.card, maxHeight: room }]}
+        onPress={() => {}}>
         <Text style={[styles.context, { color: c.textSecondary }]}>{context}</Text>
 
         <View style={styles.entry}>
@@ -101,14 +121,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: Spacing.lg,
   },
+  backdropLifted: { justifyContent: 'flex-start' },
   card: {
     borderRadius: 24,
     padding: Spacing.lg,
     gap: Spacing.sm,
     width: '86%',
     maxWidth: 620,
-    // The list scrolls rather than pushing the card off a landscape screen.
-    maxHeight: '90%',
   },
   context: { fontSize: 13, fontWeight: '800', textAlign: 'center', letterSpacing: 0.5 },
   entry: { flexDirection: 'row', gap: Spacing.sm },
@@ -128,7 +147,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addText: { fontSize: 16, fontWeight: '800' },
-  list: { flexGrow: 0 },
+  // flexShrink lets the log give up room to the field above it; flexGrow: 0 stops it claiming
+  // space it does not need when there are only one or two notes.
+  list: { flexGrow: 0, flexShrink: 1 },
   listContent: { gap: Spacing.sm, paddingTop: Spacing.xs },
   line: { gap: 2 },
   lineMeta: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },

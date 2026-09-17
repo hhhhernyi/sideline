@@ -1,7 +1,8 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenHeader } from '@/components/screen-header';
@@ -10,6 +11,7 @@ import { CardShadow, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatClock } from '@/lib/clock';
 import { deleteMatch, loadMatches, type MatchRecord } from '@/lib/history';
+import { matchSummary } from '@/lib/summary';
 
 /** "17 Sep, 8:42 pm" - enough to find a game by, without a year nobody needs. */
 function formatDate(at: number): string {
@@ -21,10 +23,12 @@ function formatDate(at: number): string {
 
 /** Duration reads in minutes: nobody cares that a match ran 48 minutes and 12 seconds. */
 function formatDuration(ms: number): string {
-  const minutes = Math.round(ms / 60_000);
-  if (minutes < 1) return 'under a minute';
-  return `${minutes} min`;
+  const n = Math.round(ms / 60_000);
+  return n < 1 ? 'under a minute' : `${n} min`;
 }
+
+/** How far the card has to be dragged before letting go deletes it. */
+const SWIPE_THRESHOLD = 40;
 
 export default function HistoryScreen() {
   const c = useTheme();
@@ -47,10 +51,19 @@ export default function HistoryScreen() {
     }, []),
   );
 
-  const remove = async (id: string) => {
+  const remove = (id: string) => {
     setMatches((prev) => prev?.filter((m) => m.id !== id) ?? null);
     setOpen(null);
-    await deleteMatch(id);
+    deleteMatch(id);
+  };
+
+  const share = async (match: MatchRecord) => {
+    const emoji = getSport(match.sportId)?.emoji ?? '🏆';
+    try {
+      await Share.share({ message: matchSummary(match, emoji) });
+    } catch {
+      // Dismissing the share sheet rejects on some versions. Nothing to recover from.
+    }
   };
 
   return (
@@ -85,63 +98,80 @@ export default function HistoryScreen() {
             const expanded = open === match.id;
             const sport = getSport(match.sportId);
             return (
-              <Pressable
+              <Swipeable
                 key={match.id}
-                style={[styles.card, CardShadow, { backgroundColor: c.card }]}
-                onPress={() => setOpen(expanded ? null : match.id)}>
-                <View style={styles.row}>
-                  {sport ? (
-                    <View style={[styles.icon, { backgroundColor: sport.tint }]}>
-                      <MaterialCommunityIcons name={sport.icon} size={22} color={c.text} />
+                friction={2}
+                rightThreshold={SWIPE_THRESHOLD}
+                // Deleting on release rather than leaving the row parked open: there is one
+                // action here, so an open row would only be waiting for a second tap.
+                onSwipeableOpen={() => remove(match.id)}
+                renderRightActions={() => (
+                  <View style={[styles.swipeAction, { backgroundColor: c.away }]}>
+                    <MaterialCommunityIcons name="trash-can-outline" size={22} color="#FFFFFF" />
+                    <Text style={styles.swipeText}>Delete</Text>
+                  </View>
+                )}>
+                <Pressable
+                  style={[styles.card, CardShadow, { backgroundColor: c.card }]}
+                  onPress={() => setOpen(expanded ? null : match.id)}>
+                  <View style={styles.row}>
+                    {sport ? (
+                      <View style={[styles.icon, { backgroundColor: sport.tint }]}>
+                        <MaterialCommunityIcons name={sport.icon} size={22} color={c.text} />
+                      </View>
+                    ) : null}
+
+                    <View style={styles.headline}>
+                      <Text style={[styles.teams, { color: c.text }]} numberOfLines={1}>
+                        {match.home.name} v {match.away.name}
+                      </Text>
+                      <Text style={[styles.meta, { color: c.textSecondary }]} numberOfLines={1}>
+                        {formatDate(match.at)} · {match.sportName} ·{' '}
+                        {formatDuration(match.durationMs)}
+                        {match.competitive ? ' · competitive' : ''}
+                        {match.notes.length > 0
+                          ? ` · ${match.notes.length} note${match.notes.length > 1 ? 's' : ''}`
+                          : ''}
+                      </Text>
+                    </View>
+
+                    <Text style={[styles.score, { color: c.text }]}>{match.headline}</Text>
+                  </View>
+
+                  {expanded ? (
+                    <View style={styles.details}>
+                      {match.parts ? (
+                        <Text style={[styles.parts, { color: c.textSecondary }]}>
+                          {match.parts}
+                        </Text>
+                      ) : null}
+
+                      {match.notes.map((note) => (
+                        <View key={note.id} style={styles.note}>
+                          <Text style={[styles.noteMeta, { color: c.textSecondary }]}>
+                            {[
+                              match.partNames[note.period] ?? '',
+                              `${note.score.home}-${note.score.away}`,
+                              formatClock(note.clock),
+                            ]
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </Text>
+                          <Text style={[styles.noteText, { color: c.text }]}>{note.text}</Text>
+                        </View>
+                      ))}
+
+                      <Pressable
+                        onPress={() => share(match)}
+                        hitSlop={8}
+                        style={[styles.shareBtn, { backgroundColor: c.accent }]}>
+                        <MaterialCommunityIcons name="share-variant" size={17} color={c.text} />
+                        <Text style={[styles.shareText, { color: c.text }]}>Share</Text>
+                      </Pressable>
                     </View>
                   ) : null}
-
-                  <View style={styles.headline}>
-                    <Text style={[styles.teams, { color: c.text }]} numberOfLines={1}>
-                      {match.home.name} v {match.away.name}
-                    </Text>
-                    <Text style={[styles.meta, { color: c.textSecondary }]} numberOfLines={1}>
-                      {formatDate(match.at)} · {match.sportName} · {formatDuration(match.durationMs)}
-                      {match.competitive ? ' · competitive' : ''}
-                      {match.notes.length > 0
-                        ? ` · ${match.notes.length} note${match.notes.length > 1 ? 's' : ''}`
-                        : ''}
-                    </Text>
-                  </View>
-
-                  <Text style={[styles.score, { color: c.text }]}>{match.scoreline}</Text>
-                </View>
-
-                {expanded ? (
-                  <View style={styles.details}>
-                    {match.notes.map((note) => (
-                      <View key={note.id} style={styles.note}>
-                        <Text style={[styles.noteMeta, { color: c.textSecondary }]}>
-                          {[
-                            match.partNames[note.period] ?? '',
-                            `${note.score.home}-${note.score.away}`,
-                            formatClock(note.clock),
-                          ]
-                            .filter(Boolean)
-                            .join(' · ')}
-                        </Text>
-                        <Text style={[styles.noteText, { color: c.text }]}>{note.text}</Text>
-                      </View>
-                    ))}
-                    {match.notes.length === 0 ? (
-                      <Text style={[styles.noteMeta, { color: c.textSecondary }]}>
-                        No notes were logged in this match.
-                      </Text>
-                    ) : null}
-                    <Pressable
-                      onPress={() => remove(match.id)}
-                      hitSlop={8}
-                      style={[styles.delete, { backgroundColor: c.background }]}>
-                      <Text style={[styles.deleteText, { color: c.textSecondary }]}>Delete</Text>
-                    </Pressable>
-                  </View>
-                ) : null}
-              </Pressable>
+                </Pressable>
+              </Swipeable>
             );
           })
         )}
@@ -164,6 +194,15 @@ const styles = StyleSheet.create({
   list: { paddingTop: Spacing.md, gap: Spacing.sm },
   empty: { fontSize: 15, fontWeight: '600', textAlign: 'center', paddingVertical: Spacing.xl },
   card: { borderRadius: 18, padding: Spacing.md, gap: Spacing.sm },
+  swipeAction: {
+    width: 104,
+    marginLeft: Spacing.sm,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+  },
+  swipeText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   icon: { width: 40, height: 40, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   headline: { flex: 1, gap: 2 },
@@ -172,16 +211,18 @@ const styles = StyleSheet.create({
   // Tabular figures keep the scorelines aligned down the right edge of the list.
   score: { fontSize: 17, fontWeight: '800', fontVariant: ['tabular-nums'] },
   details: { gap: Spacing.sm, paddingTop: Spacing.xs },
+  parts: { fontSize: 13, fontWeight: '700', fontVariant: ['tabular-nums'] },
   note: { gap: 2 },
   noteMeta: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
   noteText: { fontSize: 14, fontWeight: '600' },
-  delete: {
+  shareBtn: {
+    flexDirection: 'row',
     alignSelf: 'flex-start',
-    height: 36,
+    alignItems: 'center',
+    gap: Spacing.xs,
+    height: 38,
     paddingHorizontal: Spacing.md,
     borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  deleteText: { fontSize: 13, fontWeight: '800' },
+  shareText: { fontSize: 14, fontWeight: '800' },
 });

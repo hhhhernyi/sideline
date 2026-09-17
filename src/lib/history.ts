@@ -19,8 +19,10 @@ export type MatchRecord = {
   competitive: boolean;
   home: { name: string; color: string };
   away: { name: string; color: string };
-  /** "3 - 1", or "2 - 1 (25-22, 21-25, 15-13)" where sets were played. */
-  scoreline: string;
+  /** "3 - 1" - sets won, or the points where one game was the whole match. */
+  headline: string;
+  /** "25-22, 21-25, 15-13" - the parts, or empty where there was only one. */
+  parts: string;
   /** Score per period, kept so a summary can break the match down later. */
   periods: Period[];
   /**

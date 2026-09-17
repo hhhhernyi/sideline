@@ -14,6 +14,8 @@ export type Sport = {
   icon: IconName;
   /** Pastel tint used behind the icon on the picker card. */
   tint: string;
+  /** Stands in for the icon where only text travels - a shared summary. */
+  emoji: string;
   /** Point values offered as score buttons, e.g. [1, 2, 3] for basketball. */
   increments: number[];
   /** How the match is divided, and what ends a period. */
@@ -26,6 +28,7 @@ export const SPORTS: Sport[] = [
     name: 'Soccer',
     icon: 'soccer',
     tint: '#D2EBDA',
+    emoji: '⚽',
     increments: [1],
     format: {
       decidedBy: 'clock',
@@ -40,6 +43,7 @@ export const SPORTS: Sport[] = [
     name: 'Basketball',
     icon: 'basketball',
     tint: '#FBD9C4',
+    emoji: '🏀',
     increments: [1, 2, 3],
     // FIBA quarters and a five-minute overtime. The length is only the starting point - it
     // is set per match on the scoreboard, because a rec game is whatever the court is booked
@@ -58,6 +62,7 @@ export const SPORTS: Sport[] = [
     name: 'Volleyball',
     icon: 'volleyball',
     tint: '#FAE7BE',
+    emoji: '🏐',
     increments: [1],
     // A set runs to 25 win-by-2 with no ceiling - 30-28 and 33-31 are both legal - and a match
     // is best of five, with the fifth played to 15. The best-of only applies in competitive
@@ -75,6 +80,7 @@ export const SPORTS: Sport[] = [
     name: 'Badminton',
     icon: 'badminton',
     tint: '#D9E8F2',
+    emoji: '🏸',
     increments: [1],
     // Badminton is played in games, not sets: best of three to 21 win-by-2, stopping at 30,
     // where 30-29 takes it. Every game uses the same rule, so there is no decider.

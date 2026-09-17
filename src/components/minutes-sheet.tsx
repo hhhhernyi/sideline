@@ -1,7 +1,15 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 
 import { CardShadow, Spacing } from '@/constants/theme';
+import { useKeyboardHeight } from '@/hooks/use-keyboard';
 import { useTheme } from '@/hooks/use-theme';
 
 type Props = {
@@ -40,9 +48,14 @@ export function MinutesSheet({
   onClose,
 }: Props) {
   const c = useTheme();
+  const keyboard = useKeyboardHeight();
+  const { height: screen } = useWindowDimensions();
   const [other, setOther] = useState('');
 
   if (!visible) return null;
+
+  // Lifted clear of the keyboard rather than centred behind it - see the notes sheet.
+  const room = screen - keyboard - Spacing.lg * 2;
 
   const submitOther = () => {
     const minutes = Number.parseInt(other, 10);
@@ -55,8 +68,12 @@ export function MinutesSheet({
 
   return (
     // Tapping anywhere off the card dismisses, so the sheet needs no cancel button.
-    <Pressable style={styles.backdrop} onPress={onClose}>
-      <Pressable style={[styles.card, CardShadow, { backgroundColor: c.card }]} onPress={() => {}}>
+    <Pressable
+      style={[styles.backdrop, keyboard > 0 ? styles.backdropLifted : null]}
+      onPress={onClose}>
+      <Pressable
+        style={[styles.card, CardShadow, { backgroundColor: c.card, maxHeight: room }]}
+        onPress={() => {}}>
         <Text style={[styles.title, { color: c.text }]}>{title}</Text>
 
         <View style={styles.row}>
@@ -117,6 +134,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: Spacing.lg,
   },
+  backdropLifted: { justifyContent: 'flex-start' },
   card: { borderRadius: 24, padding: Spacing.lg, gap: Spacing.md, maxWidth: 520 },
   title: { fontSize: 17, fontWeight: '700', textAlign: 'center' },
   row: { flexDirection: 'row', justifyContent: 'center', gap: Spacing.sm },

@@ -27,11 +27,17 @@ export function ScreenHeader({ title, action }: Props) {
           backgroundColor: c.header,
           borderBottomColor: c.headerBorder,
           paddingTop: insets.top + Spacing.lg,
+          paddingLeft: insets.left + Spacing.md,
+          paddingRight: insets.right + Spacing.md,
         },
       ]}>
       <Text style={[styles.title, { color: c.text }]}>{title}</Text>
       {action ? (
-        <View style={[styles.action, { bottom: Spacing.lg }]} pointerEvents="box-none">
+        <View
+          // In landscape the screen's rounded corner and the notch both live out at this edge,
+          // so the control is held off it by the inset plus a gap of its own.
+          style={[styles.action, { right: insets.right + Spacing.lg, bottom: Spacing.lg }]}
+          pointerEvents="box-none">
           {action}
         </View>
       ) : null}
@@ -42,9 +48,8 @@ export function ScreenHeader({ title, action }: Props) {
 const styles = StyleSheet.create({
   band: {
     paddingBottom: Spacing.lg,
-    paddingHorizontal: Spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   title: { fontSize: 28, fontWeight: '800', textAlign: 'center' },
-  action: { position: 'absolute', right: Spacing.md, alignItems: 'flex-end', justifyContent: 'center' },
+  action: { position: 'absolute', alignItems: 'flex-end', justifyContent: 'center' },
 });
