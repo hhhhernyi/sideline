@@ -4,28 +4,41 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { CardShadow, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-/** What the fourth official's board almost always says. Anything else goes in the field. */
-const QUICK = [1, 2, 3, 4, 5];
-
 type Props = {
   visible: boolean;
-  /** Minutes already signalled for this period, so the sheet shows what it is changing. */
+  title: string;
+  /** Quick choices, in minutes. */
+  options: number[];
+  /** Shown in front of each number - "+" for added time, nothing for a period length. */
+  prefix?: string;
+  /** The minutes currently in force, so the sheet marks what it is changing. */
   current: number;
+  /** Offer a Clear that selects nothing. Added time can be taken back; a period cannot be zero. */
+  allowClear?: boolean;
   onSelect: (minutes: number) => void;
   onClose: () => void;
 };
 
 /**
- * Sheet for signalling added time.
+ * Sheet for picking a number of minutes - added time, or how long a period runs.
  *
- * The amount is a total, not an increment - the board goes up once saying "+3", it does not
- * get tapped three times - so picking 3 twice still means three minutes.
+ * The value is a total, not an increment: picking 3 twice means three minutes, not six. That
+ * matches how added time is actually signalled, one board saying "+3".
  *
  * An in-tree overlay rather than a `Modal`, for the same reason as the colour picker: iOS
  * throws when a modal's `supportedOrientations` shares nothing with the app, and this app is
  * locked to landscape.
  */
-export function AddedTime({ visible, current, onSelect, onClose }: Props) {
+export function MinutesSheet({
+  visible,
+  title,
+  options,
+  prefix = '',
+  current,
+  allowClear = false,
+  onSelect,
+  onClose,
+}: Props) {
   const c = useTheme();
   const [other, setOther] = useState('');
 
@@ -44,10 +57,10 @@ export function AddedTime({ visible, current, onSelect, onClose }: Props) {
     // Tapping anywhere off the card dismisses, so the sheet needs no cancel button.
     <Pressable style={styles.backdrop} onPress={onClose}>
       <Pressable style={[styles.card, CardShadow, { backgroundColor: c.card }]} onPress={() => {}}>
-        <Text style={[styles.title, { color: c.text }]}>Added time</Text>
+        <Text style={[styles.title, { color: c.text }]}>{title}</Text>
 
         <View style={styles.row}>
-          {QUICK.map((minutes) => (
+          {options.map((minutes) => (
             <Pressable
               key={minutes}
               onPress={() => onSelect(minutes)}
@@ -57,7 +70,10 @@ export function AddedTime({ visible, current, onSelect, onClose }: Props) {
                 { backgroundColor: c.background },
                 minutes === current && { borderColor: c.text, borderWidth: 3 },
               ]}>
-              <Text style={[styles.quickText, { color: c.text }]}>+{minutes}</Text>
+              <Text style={[styles.quickText, { color: c.text }]}>
+                {prefix}
+                {minutes}
+              </Text>
             </Pressable>
           ))}
         </View>
@@ -75,7 +91,7 @@ export function AddedTime({ visible, current, onSelect, onClose }: Props) {
             placeholder="Other"
             placeholderTextColor={c.textSecondary}
           />
-          {current > 0 ? (
+          {allowClear && current > 0 ? (
             <Pressable
               onPress={() => onSelect(0)}
               hitSlop={6}

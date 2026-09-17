@@ -27,7 +27,14 @@ export const SPORTS: Sport[] = [
     icon: 'soccer',
     tint: '#D2EBDA',
     increments: [1],
-    format: { decidedBy: 'clock', count: 2, minutes: 45, countsDown: false, label: 'Half' },
+    format: {
+      decidedBy: 'clock',
+      count: 2,
+      minutes: 45,
+      lengths: [20, 30, 40, 45],
+      countsDown: false,
+      label: 'Half',
+    },
   },
   {
     id: 'basketball',
@@ -35,8 +42,18 @@ export const SPORTS: Sport[] = [
     icon: 'basketball',
     tint: '#FBD9C4',
     increments: [1, 2, 3],
-    // FIBA quarters. The NBA's 12 belongs in a per-match setting, not a second sport.
-    format: { decidedBy: 'clock', count: 4, minutes: 10, countsDown: true, label: 'Quarter' },
+    // FIBA quarters and a five-minute overtime. The length is only the starting point - it
+    // is set per match on the scoreboard, because a rec game is whatever the court is booked
+    // for.
+    format: {
+      decidedBy: 'clock',
+      count: 4,
+      minutes: 10,
+      lengths: [6, 8, 10, 12],
+      countsDown: true,
+      overtimeMinutes: 5,
+      label: 'Quarter',
+    },
   },
   {
     id: 'volleyball',

@@ -5,8 +5,8 @@ import { useCallback, useReducer, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AddedTime } from '@/components/added-time';
 import { ColorPicker } from '@/components/color-picker';
+import { MinutesSheet } from '@/components/minutes-sheet';
 import { TeamPanel } from '@/components/team-panel';
 import { getSport } from '@/constants/sports';
 import { CardShadow, Colors, Spacing, TeamColors } from '@/constants/theme';
@@ -31,16 +31,21 @@ import {
 const NAV_BTN_WIDTH = 132;
 const NAV_BTN_HEIGHT = 46;
 
+/** What the fourth official's board almost always says. Anything else is typed in. */
+const ADDED_TIME_OPTIONS = [1, 2, 3, 4, 5];
+
 /** Stands in for an unknown sport so the hooks below stay unconditional. Never rendered. */
 const NO_FORMAT: MatchFormat = {
   decidedBy: 'clock',
   count: 1,
   minutes: 0,
+  lengths: [],
   countsDown: false,
   label: 'Period',
 };
 
 type TeamMeta = { name: string; color: string };
+type Sheet = 'added' | 'length' | null;
 
 export default function GameScreen() {
   const { sport: sportId } = useLocalSearchParams<{ sport: string }>();
@@ -58,21 +63,14 @@ export default function GameScreen() {
     away: { name: 'Away', color: Colors.away },
   });
   const [picking, setPicking] = useState<Team | null>(null);
-  const [addingTime, setAddingTime] = useState(false);
+  const [sheet, setSheet] = useState<Sheet>(null);
   // Where on the match clock the period in play began. The clock itself always times the whole
   // match, so the summary can say how long the thing took; a half is the slice since this mark.
   const [periodStart, setPeriodStart] = useState(0);
   /** Minutes of added time signalled for this period. */
   const [added, setAdded] = useState(0);
-
-  // Where the clock stops. A half ends on 45:00 and stays there until added time is signalled;
-  // a quarter ends on the buzzer. A sport played to a score has no limit - its clock is just
-  // timing the session.
-  const limit =
-    format.decidedBy === 'clock'
-      ? periodStart + (format.minutes + (format.countsDown ? 0 : added)) * 60_000
-      : undefined;
-  const clock = useClock(limit);
+  /** How long a period runs in this match, which the sport only suggests. */
+  const [length, setLength] = useState(format.decidedBy === 'clock' ? format.minutes : 0);
 
   const [match, dispatch] = useReducer(
     useCallback((s: MatchState, a: MatchAction) => matchReducer(s, a, format), [format]),
@@ -80,25 +78,46 @@ export default function GameScreen() {
     () => initialMatch(),
   );
 
+  const bySets = format.decidedBy === 'sets';
+  // Overtime periods sit past the sport's own count, and run shorter than the quarters before.
+  const overtime = format.decidedBy === 'clock' && match.current >= format.count;
+  const periodMinutes =
+    overtime && format.decidedBy === 'clock' ? (format.overtimeMinutes ?? length) : length;
+
+  // Where the clock stops. A half ends on 45:00 and stays there until added time is signalled;
+  // a quarter ends on the buzzer. A sport played to a score has no limit - its clock is just
+  // timing the session.
+  const countsDown = format.decidedBy === 'clock' && format.countsDown;
+  const limit = bySets
+    ? undefined
+    : periodStart + (periodMinutes + (countsDown ? 0 : added)) * 60_000;
+  const clock = useClock(limit);
+
   const editTeam = (team: Team, patch: Partial<TeamMeta>) =>
     setTeams((prev) => ({ ...prev, [team]: { ...prev[team], ...patch } }));
 
   const winner = matchWinner(match, format);
-  const bySets = format.decidedBy === 'sets';
   const setOver = periodOver(match, format);
   // A set sport shows the set in play; a clocked one shows the match, because a soccer board
   // reads 2-1 overall and never 1-0 for this half.
   const shown = bySets ? match.periods[match.current] : totals(match);
   const locked = winner !== null || (bySets && setOver);
   const periodMs = bySets ? clock.ms : clock.ms - periodStart;
-  const reading = readClock(format, periodMs, added);
+  const reading = readClock(format, periodMs, periodMinutes, added);
+  const total = totals(match);
   // Added time is offered once the regulation half has been played out, which is when a fourth
   // official would raise the board. Only a clock that counts up has anywhere to put it.
-  const canAddTime =
+  const canAddTime = !bySets && !countsDown && periodMinutes > 0 && periodMs >= periodMinutes * 60_000;
+  // The length is set between periods, never mid-play, so the control is there when the clock
+  // is sitting at zero and gone the moment it starts.
+  const canSetLength =
+    format.decidedBy === 'clock' && !match.endedAt && periodMs === 0 && !clock.running;
+  // Basketball has no draw: a level game at the final buzzer goes to another period.
+  const canGoToOvertime =
     format.decidedBy === 'clock' &&
-    !format.countsDown &&
-    periodMs >= format.minutes * 60_000 &&
-    format.minutes > 0;
+    !!format.overtimeMinutes &&
+    match.endedAt !== null &&
+    total.home === total.away;
 
   const score = (team: Team, delta: number) => {
     // Once the period or match is decided, stop adding points - but let -1 through, so a
@@ -113,24 +132,33 @@ export default function GameScreen() {
     dispatch({ type: 'score', team, delta });
   };
 
+  /** Stop the clock and mark where the next period starts from. */
+  const closePeriod = () => {
+    clock.pause();
+    setPeriodStart(clock.ms);
+    setAdded(0);
+  };
+
   // What the period control does next, or null when there is nothing to advance to. For a set
   // sport it only appears once the game is won, and offers another one rather than counting
   // towards a best-of nobody agreed to.
   const advanceLabel = (() => {
     if (bySets) return setOver ? `New ${format.label}` : null;
-    if (match.endedAt) return null;
+    if (match.endedAt) return canGoToOvertime ? 'Overtime' : null;
     const last = match.current >= format.count - 1;
     return last ? 'Finish' : `End ${format.label}`;
   })();
 
   const advance = () => {
+    if (canGoToOvertime) {
+      dispatch({ type: 'overtime' });
+      closePeriod();
+      return;
+    }
     dispatch({ type: 'advance' });
     // A set sport keeps one clock for the whole session - the next game is not a new period to
     // time. A clocked one stops at the whistle and the next period starts from here.
-    if (bySets) return;
-    clock.pause();
-    setPeriodStart(clock.ms);
-    setAdded(0);
+    if (!bySets) closePeriod();
   };
 
   const reset = () => {
@@ -138,6 +166,7 @@ export default function GameScreen() {
     clock.reset();
     setPeriodStart(0);
     setAdded(0);
+    if (format.decidedBy === 'clock') setLength(format.minutes);
   };
 
   if (!sport) {
@@ -243,10 +272,18 @@ export default function GameScreen() {
               <Text style={[styles.pillText, { color: c.text }]}>{advanceLabel}</Text>
             </Pressable>
           ) : null}
+          {canSetLength ? (
+            <Pressable
+              style={[styles.pill, styles.shortPill, CardShadow, { backgroundColor: c.card }]}
+              onPress={() => setSheet('length')}
+              hitSlop={12}>
+              <Text style={[styles.pillText, { color: c.text }]}>{periodMinutes} MIN</Text>
+            </Pressable>
+          ) : null}
           {canAddTime ? (
             <Pressable
-              style={[styles.pill, styles.addPill, CardShadow, { backgroundColor: c.card }]}
-              onPress={() => setAddingTime(true)}
+              style={[styles.pill, styles.shortPill, CardShadow, { backgroundColor: c.card }]}
+              onPress={() => setSheet('added')}
               hitSlop={12}>
               <Text style={[styles.pillText, { color: c.text }]}>
                 {added > 0 ? `+${added} MIN` : 'ADDED TIME'}
@@ -281,14 +318,30 @@ export default function GameScreen() {
         onClose={() => setPicking(null)}
       />
 
-      <AddedTime
-        visible={addingTime}
+      <MinutesSheet
+        visible={sheet === 'added'}
+        title="Added time"
+        options={ADDED_TIME_OPTIONS}
+        prefix="+"
         current={added}
+        allowClear
         onSelect={(minutes) => {
           setAdded(minutes);
-          setAddingTime(false);
+          setSheet(null);
         }}
-        onClose={() => setAddingTime(false)}
+        onClose={() => setSheet(null)}
+      />
+
+      <MinutesSheet
+        visible={sheet === 'length'}
+        title={`${format.decidedBy === 'clock' ? format.label : 'Period'} length`}
+        options={format.decidedBy === 'clock' ? format.lengths : []}
+        current={periodMinutes}
+        onSelect={(minutes) => {
+          setLength(minutes);
+          setSheet(null);
+        }}
+        onClose={() => setSheet(null)}
       />
     </View>
   );
@@ -332,7 +385,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addPill: { minWidth: 140 },
+  shortPill: { minWidth: 130 },
   pillText: { fontSize: 16, fontWeight: '800', letterSpacing: 0.5 },
   whistleBtn: {
     flexDirection: 'row',

@@ -26,13 +26,22 @@ export type MatchFormat =
       decidedBy: 'clock';
       /** Halves or quarters. */
       count: number;
-      /** Minutes in a period, before any added time. */
+      /** Minutes in a period, before any added time. The starting point, not a fixed rule -
+       *  a rec game runs for however long the court is booked. */
       minutes: number;
+      /** Lengths offered when changing it, alongside a typed-in number. */
+      lengths: number[];
       /**
        * Which way the clock runs. Basketball counts down to a buzzer; football counts up and
        * carries on through added time, so only the counting-up sports can have any.
        */
       countsDown: boolean;
+      /**
+       * Minutes in an overtime period, for sports that play one rather than accept a draw.
+       * Omitted where a level scoreline is a real result - a league football match is a draw,
+       * and extra time belongs to a knockout tie this app has no way to know about.
+       */
+      overtimeMinutes?: number;
       label: string;
     };
 
@@ -67,6 +76,7 @@ export type MatchState = {
 export type MatchAction =
   | { type: 'score'; team: Team; delta: number }
   | { type: 'advance' }
+  | { type: 'overtime' }
   | { type: 'note'; text: string }
   | { type: 'finish' }
   | { type: 'reset' };
@@ -187,6 +197,19 @@ export function matchReducer(
         current: state.periods.length,
       };
     }
+    case 'overtime': {
+      // Only from a finished, level scoreline. Basketball has no draw, so the alternative to
+      // another period is a result the sport does not recognise.
+      if (format.decidedBy !== 'clock' || !format.overtimeMinutes || !state.endedAt) return state;
+      const total = totals(state);
+      if (total.home !== total.away) return state;
+      return {
+        ...state,
+        periods: [...state.periods, emptyPeriod()],
+        current: state.periods.length,
+        endedAt: null,
+      };
+    }
     case 'note': {
       const text = action.text.trim();
       if (!text) return state;
@@ -206,9 +229,13 @@ export function matchReducer(
   }
 }
 
-/** "Set 2", "2nd Half" - what the live period is called on the scoreboard. */
+/** "Set 2", "2nd Half", "Overtime 2" - what the live period is called on the scoreboard. */
 export function periodName(format: MatchFormat, index: number): string {
   if (format.decidedBy === 'sets') return `${format.label} ${index + 1}`;
+  if (index >= format.count) {
+    const n = index - format.count + 1;
+    return n === 1 ? 'Overtime' : `Overtime ${n}`;
+  }
   const ordinals = ['1st', '2nd', '3rd', '4th'];
   const ordinal = ordinals[index] ?? `${index + 1}th`;
   return `${ordinal} ${format.label}`;

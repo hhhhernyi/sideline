@@ -25,15 +25,18 @@ export function formatClock(ms: number): string {
  * one played to a score - a rec badminton session wants to know it has been going 48 minutes,
  * not that game three is nine minutes old.
  *
+ * `minutes` is the length of the period in play rather than the sport's default, because the
+ * length is set per match and an overtime period is shorter than the quarters before it.
+ *
  * Direction is the sport's, not a preference: a football clock counts up, a basketball clock
  * counts down. Either way it stops where the period ends and stays there. For football that
  * is 45:00 until added time is signalled, which moves the end and lets it run on.
  */
-export function readClock(format: MatchFormat, ms: number, added = 0): Reading {
+export function readClock(format: MatchFormat, ms: number, minutes = 0, added = 0): Reading {
   if (format.decidedBy === 'sets') {
     return { text: formatClock(ms), added: null, expired: false };
   }
-  const full = format.minutes * 60_000;
+  const full = minutes * 60_000;
   if (format.countsDown) {
     const left = full - ms;
     return { text: formatClock(left), added: null, expired: left <= 0 };
