@@ -186,15 +186,13 @@ export default function HistoryScreen() {
                         <Pressable
                           onPress={() => remove(match.id)}
                           hitSlop={8}
-                          style={[styles.actionBtn, { backgroundColor: c.background }]}>
+                          style={[styles.actionBtn, { backgroundColor: c.away }]}>
                           <MaterialCommunityIcons
                             name="trash-can-outline"
                             size={17}
-                            color={c.textSecondary}
+                            color="#FFFFFF"
                           />
-                          <Text style={[styles.actionText, { color: c.textSecondary }]}>
-                            Delete
-                          </Text>
+                          <Text style={[styles.actionText, { color: '#FFFFFF' }]}>Delete</Text>
                         </Pressable>
                       </View>
                     </View>

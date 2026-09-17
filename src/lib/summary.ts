@@ -15,10 +15,17 @@ function minutes(ms: number): string {
 }
 
 /**
+ * Signs off every shared summary. The summary goes into a group chat of people who were at the
+ * game, which is as close to the right audience as this app is ever going to get - so it says
+ * where it came from, once, at the bottom, where it is not in the way of the score.
+ */
+const FOOTER = 'Scored with Sideline — the scoreboard app';
+
+/**
  * The match as a block of text to send someone.
  *
  * Plain text with line breaks rather than anything richer, because the places it is going -
- * WhatsApp, Telegram, Messages - all render exactly that and nothing else. No markdown: a
+ * WhatsApp, Telegram, Messages - all render exactly that and nothing else. No markdown: an
  * asterisk-wrapped word is bold in one of them and literal asterisks in the others.
  */
 export function matchSummary(record: MatchRecord, emoji: string): string {
@@ -43,5 +50,6 @@ export function matchSummary(record: MatchRecord, emoji: string): string {
     }
   }
 
+  lines.push('', FOOTER);
   return lines.join('\n');
 }

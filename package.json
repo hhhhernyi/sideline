@@ -35,7 +35,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsc src/lib/game.ts src/lib/clock.ts --ignoreConfig --outDir .test-build --module commonjs --target es2020 && node src/lib/game.test.js"
   },
   "private": true
 }
