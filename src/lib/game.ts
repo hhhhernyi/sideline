@@ -74,6 +74,8 @@ export type Note = {
 };
 
 export type MatchState = {
+  /** Stable for the life of the match, so saving it twice updates one history entry. */
+  id: string;
   periods: Period[];
   /** Index of the live period. Always a valid index into `periods`. */
   current: number;
@@ -96,6 +98,9 @@ const emptyPeriod = (): Period => ({ home: 0, away: 0 });
 
 export function initialMatch(now = Date.now()): MatchState {
   return {
+    // Enough to be unique without a uuid dependency: two matches cannot start in the same
+    // millisecond on one phone, and the suffix covers it if they somehow do.
+    id: `${now.toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
     periods: [emptyPeriod()],
     current: 0,
     notes: [],
@@ -270,6 +275,26 @@ export function matchReducer(
     case 'reset':
       return initialMatch();
   }
+}
+
+/**
+ * The final score as a line of text: "3 - 1", or "2 - 1 (25-22, 21-25, 15-13)" once a match
+ * has more than one part to break down. A set sport leads with sets won where there is a
+ * best-of to win, and with the points otherwise, because a single rec game to 21 is the match.
+ */
+export function scoreline(state: MatchState, format: MatchFormat): string {
+  const parts = state.periods.map((p) => `${p.home}-${p.away}`).join(', ');
+  const headline =
+    format.decidedBy !== 'sets'
+      ? totals(state)
+      : // One game is the match, so its points are the score. Once a second has been played -
+        // whether a best-of was declared or people just carried on - the match is how many
+        // were won, and the points belong in the breakdown.
+        format.best !== undefined || state.periods.length > 1
+        ? periodsWon(state, format)
+        : state.periods[state.current];
+  const line = `${headline.home} - ${headline.away}`;
+  return state.periods.length > 1 ? `${line} (${parts})` : line;
 }
 
 /**

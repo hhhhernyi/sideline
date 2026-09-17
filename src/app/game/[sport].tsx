@@ -1,7 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useMemo, useReducer, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -16,6 +16,7 @@ import { useClock } from '@/hooks/use-clock';
 import { useTheme } from '@/hooks/use-theme';
 import { useWhistle } from '@/hooks/use-whistle';
 import { formatClock, readClock } from '@/lib/clock';
+import { saveMatch, type MatchRecord } from '@/lib/history';
 import {
   casualFormat,
   clockLabel,
@@ -25,6 +26,7 @@ import {
   periodName,
   periodOver,
   periodsWon,
+  scoreline,
   totals,
   type MatchAction,
   type MatchFormat,
@@ -169,6 +171,48 @@ export default function GameScreen() {
     text: note.text,
   }));
 
+  // Building the record reads a dozen values from this render, so it is kept behind a ref that
+  // every render refreshes. The unmount effect below fires once, long after the render that
+  // created it, and would otherwise file a match frozen at nil-nil.
+  const recordRef = useRef<() => MatchRecord | null>(() => null);
+  recordRef.current = () => {
+    if (!sport) return null;
+    const played = match.periods.some((p) => p.home > 0 || p.away > 0) || match.notes.length > 0;
+    if (!played) return null;
+    return {
+      id: match.id,
+      sportId: sport.id,
+      sportName: sport.name,
+      at: match.startedAt,
+      competitive,
+      home: { name: teams.home.name, color: teams.home.color },
+      away: { name: teams.away.name, color: teams.away.color },
+      scoreline: scoreline(match, format),
+      periods: match.periods,
+      partNames: match.periods.map((_, i) => partName(i)),
+      durationMs: clock.ms,
+      notes: match.notes,
+    };
+  };
+
+  // File it the moment it is over, so a match that ends properly is recorded even if the phone
+  // is put straight in a pocket.
+  useEffect(() => {
+    if (!match.endedAt) return;
+    const record = recordRef.current();
+    if (record) saveMatch(record);
+  }, [match.endedAt]);
+
+  // And again on the way out, for every match that was played but never formally finished -
+  // which, for a kickabout, is most of them.
+  useEffect(
+    () => () => {
+      const record = recordRef.current();
+      if (record) saveMatch(record);
+    },
+    [],
+  );
+
   const score = (team: Team, delta: number) => {
     // Once the period or match is decided, stop adding points - but let -1 through, so a
     // mis-tap that ended it early can still be taken back.
@@ -213,6 +257,10 @@ export default function GameScreen() {
   };
 
   const reset = () => {
+    // Reset clears the board for the next game, it does not unhappen the last one - and for
+    // back-to-back rec games this button is how one match ends and the next begins.
+    const record = recordRef.current();
+    if (record) saveMatch(record);
     dispatch({ type: 'reset' });
     clock.reset();
     setPeriodStart(0);

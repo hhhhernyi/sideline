@@ -42,7 +42,20 @@ export default function SportPickerScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.screen} style={{ backgroundColor: c.background }}>
-      <ScreenHeader title="Pick a sport" />
+      <ScreenHeader
+        title="Pick a sport"
+        action={
+          <Link href="/history" asChild>
+            {/* No `style` on the Pressable, for the same reason as the sport cards below. */}
+            <Pressable hitSlop={12}>
+              <View style={[styles.historyBtn, CardShadow, { backgroundColor: c.card }]}>
+                <MaterialCommunityIcons name="history" size={18} color={c.text} />
+                <Text style={[styles.historyText, { color: c.text }]}>History</Text>
+              </View>
+            </Pressable>
+          </Link>
+        }
+      />
       <View
         style={[
           styles.grid,
@@ -95,6 +108,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: Spacing.sm,
   },
+  historyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    height: 40,
+    paddingHorizontal: Spacing.md,
+    borderRadius: 999,
+  },
+  historyText: { fontSize: 15, fontWeight: '700' },
   // Pulled out of the flow so the icon stays dead centre in the card whatever the label does.
   name: {
     position: 'absolute',
