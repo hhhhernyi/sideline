@@ -2,7 +2,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ColorPicker } from '@/components/color-picker';
@@ -40,6 +40,11 @@ const NAV_BTN_HEIGHT = 46;
 
 /** What the fourth official's board almost always says. Anything else is typed in. */
 const ADDED_TIME_OPTIONS = [1, 2, 3, 4, 5];
+
+/** Long enough that a flurry of taps writes once, short enough to beat a swipe-up. */
+const SAVE_DEBOUNCE_MS = 800;
+/** How often a running clock files its length, for matches where nothing else is happening. */
+const SAVE_TICK_MS = 30_000;
 
 /** Stands in for an unknown sport so the hooks below stay unconditional. Never rendered. */
 const NO_FORMAT: MatchFormat = {
@@ -195,23 +200,47 @@ export default function GameScreen() {
     };
   };
 
-  // File it the moment it is over, so a match that ends properly is recorded even if the phone
-  // is put straight in a pocket.
-  useEffect(() => {
-    if (!match.endedAt) return;
+  const file = () => {
     const record = recordRef.current();
     if (record) saveMatch(record);
-  }, [match.endedAt]);
+  };
 
-  // And again on the way out, for every match that was played but never formally finished -
-  // which, for a kickabout, is most of them.
-  useEffect(
-    () => () => {
-      const record = recordRef.current();
-      if (record) saveMatch(record);
-    },
-    [],
-  );
+  // Autosave, because a match has to already be on disk before it is interrupted. Swiping the
+  // app away kills it outright - no unmount, no cleanup, nothing gets a chance to run - so the
+  // record cannot be written on the way out. Whatever was last written is what history shows,
+  // which is the score and the notes as they stood, finished or not.
+  //
+  // Debounced so a run of quick taps writes once, and keyed on the clock too so that stopping
+  // it files the length it stopped at.
+  useEffect(() => {
+    const id = setTimeout(file, SAVE_DEBOUNCE_MS);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [match, clock.running]);
+
+  // A running clock changes nothing else, so a half where nobody scores would otherwise file a
+  // length from whenever the last goal was.
+  useEffect(() => {
+    if (!clock.running) return;
+    const id = setInterval(file, SAVE_TICK_MS);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clock.running]);
+
+  // Leaving the app files immediately. Swiping up backgrounds the app a moment before killing
+  // it, and that moment still runs - so this is the last chance to write, and it is the one
+  // that makes an interrupted match land with the length it actually reached.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') file();
+    });
+    return () => sub.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // On the way out as well, so a match left deliberately is filed at once rather than 800ms
+  // later, by which point this screen is gone.
+  useEffect(() => () => file(), []);
 
   const score = (team: Team, delta: number) => {
     // Once the period or match is decided, stop adding points - but let -1 through, so a
