@@ -25,8 +25,9 @@ export function formatClock(ms: number): string {
  * one played to a score - a rec badminton session wants to know it has been going 48 minutes,
  * not that game three is nine minutes old.
  *
- * Direction is the sport's, not a preference: a football clock counts up to 45:00 and keeps
- * going through added time, while a basketball clock counts down to the buzzer and stops.
+ * Direction is the sport's, not a preference: a football clock counts up, a basketball clock
+ * counts down. Either way it stops where the period ends and stays there. For football that
+ * is 45:00 until added time is signalled, which moves the end and lets it run on.
  */
 export function readClock(format: MatchFormat, ms: number, added = 0): Reading {
   if (format.decidedBy === 'sets') {
@@ -40,7 +41,8 @@ export function readClock(format: MatchFormat, ms: number, added = 0): Reading {
   return {
     text: formatClock(ms),
     added: added > 0 ? `+${added}` : null,
-    // Added time extends the half, so the whistle is not due until it has been played out too.
+    // Added time moves the end of the half, so the whistle is not due until it has been played
+    // out too. Until any is signalled, 45:00 is where the half stops.
     expired: ms >= full + added * 60_000,
   };
 }

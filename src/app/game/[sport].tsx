@@ -5,6 +5,7 @@ import { useCallback, useReducer, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AddedTime } from '@/components/added-time';
 import { ColorPicker } from '@/components/color-picker';
 import { TeamPanel } from '@/components/team-panel';
 import { getSport } from '@/constants/sports';
@@ -49,12 +50,6 @@ export default function GameScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const whistle = useWhistle();
-  const clock = useClock();
-  const [match, dispatch] = useReducer(
-    useCallback((s: MatchState, a: MatchAction) => matchReducer(s, a, format), [format]),
-    undefined,
-    () => initialMatch(),
-  );
 
   // Names and colours are the user's setup for the match, not part of the score, so Reset
   // leaves them alone and they live outside the reducer.
@@ -63,11 +58,27 @@ export default function GameScreen() {
     away: { name: 'Away', color: Colors.away },
   });
   const [picking, setPicking] = useState<Team | null>(null);
+  const [addingTime, setAddingTime] = useState(false);
   // Where on the match clock the period in play began. The clock itself always times the whole
   // match, so the summary can say how long the thing took; a half is the slice since this mark.
   const [periodStart, setPeriodStart] = useState(0);
-  /** Minutes of added time signalled for this half. */
+  /** Minutes of added time signalled for this period. */
   const [added, setAdded] = useState(0);
+
+  // Where the clock stops. A half ends on 45:00 and stays there until added time is signalled;
+  // a quarter ends on the buzzer. A sport played to a score has no limit - its clock is just
+  // timing the session.
+  const limit =
+    format.decidedBy === 'clock'
+      ? periodStart + (format.minutes + (format.countsDown ? 0 : added)) * 60_000
+      : undefined;
+  const clock = useClock(limit);
+
+  const [match, dispatch] = useReducer(
+    useCallback((s: MatchState, a: MatchAction) => matchReducer(s, a, format), [format]),
+    undefined,
+    () => initialMatch(),
+  );
 
   const editTeam = (team: Team, patch: Partial<TeamMeta>) =>
     setTeams((prev) => ({ ...prev, [team]: { ...prev[team], ...patch } }));
@@ -79,9 +90,15 @@ export default function GameScreen() {
   // reads 2-1 overall and never 1-0 for this half.
   const shown = bySets ? match.periods[match.current] : totals(match);
   const locked = winner !== null || (bySets && setOver);
-  // Only a clock that counts up has anywhere to put added time.
-  const canAddTime = format.decidedBy === 'clock' && !format.countsDown;
-  const reading = readClock(format, bySets ? clock.ms : clock.ms - periodStart, added);
+  const periodMs = bySets ? clock.ms : clock.ms - periodStart;
+  const reading = readClock(format, periodMs, added);
+  // Added time is offered once the regulation half has been played out, which is when a fourth
+  // official would raise the board. Only a clock that counts up has anywhere to put it.
+  const canAddTime =
+    format.decidedBy === 'clock' &&
+    !format.countsDown &&
+    periodMs >= format.minutes * 60_000 &&
+    format.minutes > 0;
 
   const score = (team: Team, delta: number) => {
     // Once the period or match is decided, stop adding points - but let -1 through, so a
@@ -227,13 +244,13 @@ export default function GameScreen() {
             </Pressable>
           ) : null}
           {canAddTime ? (
-            // Tap per minute, the way it is signalled. Holding clears it, for the mis-tap.
             <Pressable
               style={[styles.pill, styles.addPill, CardShadow, { backgroundColor: c.card }]}
-              onPress={() => setAdded((n) => n + 1)}
-              onLongPress={() => setAdded(0)}
+              onPress={() => setAddingTime(true)}
               hitSlop={12}>
-              <Text style={[styles.pillText, { color: c.text }]}>+1 MIN</Text>
+              <Text style={[styles.pillText, { color: c.text }]}>
+                {added > 0 ? `+${added} MIN` : 'ADDED TIME'}
+              </Text>
             </Pressable>
           ) : null}
           {/* Hold to sustain the blast. Safe to use Pressable's function form here - this one
@@ -262,6 +279,16 @@ export default function GameScreen() {
           setPicking(null);
         }}
         onClose={() => setPicking(null)}
+      />
+
+      <AddedTime
+        visible={addingTime}
+        current={added}
+        onSelect={(minutes) => {
+          setAdded(minutes);
+          setAddingTime(false);
+        }}
+        onClose={() => setAddingTime(false)}
       />
     </View>
   );
@@ -305,7 +332,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addPill: { minWidth: 110 },
+  addPill: { minWidth: 140 },
   pillText: { fontSize: 16, fontWeight: '800', letterSpacing: 0.5 },
   whistleBtn: {
     flexDirection: 'row',
