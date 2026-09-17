@@ -42,7 +42,6 @@ export type MatchFormat =
        * and extra time belongs to a knockout tie this app has no way to know about.
        */
       overtimeMinutes?: number;
-      label: string;
     };
 
 /** One set, game, half or quarter. Scores are per period, never cumulative. */
@@ -229,6 +228,17 @@ export function matchReducer(
   }
 }
 
+/**
+ * What one period is called when a match is split into `count` of them. The noun follows the
+ * split rather than the sport, because the split is the user's: two is halves whatever is
+ * being played, and one is a straight game with no periods to name.
+ */
+export function clockLabel(count: number): string {
+  if (count === 2) return 'Half';
+  if (count === 4) return 'Quarter';
+  return 'Period';
+}
+
 /** "Set 2", "2nd Half", "Overtime 2" - what the live period is called on the scoreboard. */
 export function periodName(format: MatchFormat, index: number): string {
   if (format.decidedBy === 'sets') return `${format.label} ${index + 1}`;
@@ -238,5 +248,5 @@ export function periodName(format: MatchFormat, index: number): string {
   }
   const ordinals = ['1st', '2nd', '3rd', '4th'];
   const ordinal = ordinals[index] ?? `${index + 1}th`;
-  return `${ordinal} ${format.label}`;
+  return `${ordinal} ${clockLabel(format.count)}`;
 }

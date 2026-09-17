@@ -1,11 +1,12 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useReducer, useState } from 'react';
+import { useCallback, useMemo, useReducer, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ColorPicker } from '@/components/color-picker';
+import { MatchSetup } from '@/components/match-setup';
 import { MinutesSheet } from '@/components/minutes-sheet';
 import { TeamPanel } from '@/components/team-panel';
 import { getSport } from '@/constants/sports';
@@ -15,6 +16,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useWhistle } from '@/hooks/use-whistle';
 import { readClock } from '@/lib/clock';
 import {
+  clockLabel,
   initialMatch,
   matchReducer,
   matchWinner,
@@ -41,16 +43,15 @@ const NO_FORMAT: MatchFormat = {
   minutes: 0,
   lengths: [],
   countsDown: false,
-  label: 'Period',
 };
 
 type TeamMeta = { name: string; color: string };
-type Sheet = 'added' | 'length' | null;
+type Sheet = 'setup' | 'added' | null;
 
 export default function GameScreen() {
   const { sport: sportId } = useLocalSearchParams<{ sport: string }>();
   const sport = getSport(sportId);
-  const format = sport?.format ?? NO_FORMAT;
+  const base = sport?.format ?? NO_FORMAT;
   const c = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -69,8 +70,17 @@ export default function GameScreen() {
   const [periodStart, setPeriodStart] = useState(0);
   /** Minutes of added time signalled for this period. */
   const [added, setAdded] = useState(0);
-  /** How long a period runs in this match, which the sport only suggests. */
-  const [length, setLength] = useState(format.decidedBy === 'clock' ? format.minutes : 0);
+  /** How the match is split, and how long a part runs. The sport only suggests these. */
+  const [periods, setPeriods] = useState(base.decidedBy === 'clock' ? base.count : 0);
+  const [length, setLength] = useState(base.decidedBy === 'clock' ? base.minutes : 0);
+
+  // The sport's format with this match's choices folded in, so everything downstream - the
+  // reducer, the period names, the clock - reads one shape and never has to ask which of the
+  // two is in charge.
+  const format = useMemo<MatchFormat>(
+    () => (base.decidedBy === 'clock' ? { ...base, count: periods, minutes: length } : base),
+    [base, periods, length],
+  );
 
   const [match, dispatch] = useReducer(
     useCallback((s: MatchState, a: MatchAction) => matchReducer(s, a, format), [format]),
@@ -79,15 +89,15 @@ export default function GameScreen() {
   );
 
   const bySets = format.decidedBy === 'sets';
-  // Overtime periods sit past the sport's own count, and run shorter than the quarters before.
-  const overtime = format.decidedBy === 'clock' && match.current >= format.count;
-  const periodMinutes =
-    overtime && format.decidedBy === 'clock' ? (format.overtimeMinutes ?? length) : length;
+  const countsDown = format.decidedBy === 'clock' && format.countsDown;
+  // Overtime periods sit past the match's own count, and run shorter than the parts before.
+  const overtime = !bySets && match.current >= periods;
+  const overtimeMinutes = format.decidedBy === 'clock' ? format.overtimeMinutes : undefined;
+  const periodMinutes = overtime ? (overtimeMinutes ?? length) : length;
 
   // Where the clock stops. A half ends on 45:00 and stays there until added time is signalled;
   // a quarter ends on the buzzer. A sport played to a score has no limit - its clock is just
   // timing the session.
-  const countsDown = format.decidedBy === 'clock' && format.countsDown;
   const limit = bySets
     ? undefined
     : periodStart + (periodMinutes + (countsDown ? 0 : added)) * 60_000;
@@ -105,19 +115,15 @@ export default function GameScreen() {
   const periodMs = bySets ? clock.ms : clock.ms - periodStart;
   const reading = readClock(format, periodMs, periodMinutes, added);
   const total = totals(match);
-  // Added time is offered once the regulation half has been played out, which is when a fourth
+  // Added time is offered once the regulation part has been played out, which is when a fourth
   // official would raise the board. Only a clock that counts up has anywhere to put it.
-  const canAddTime = !bySets && !countsDown && periodMinutes > 0 && periodMs >= periodMinutes * 60_000;
-  // The length is set between periods, never mid-play, so the control is there when the clock
-  // is sitting at zero and gone the moment it starts.
-  const canSetLength =
-    format.decidedBy === 'clock' && !match.endedAt && periodMs === 0 && !clock.running;
+  const canAddTime =
+    !bySets && !countsDown && periodMinutes > 0 && periodMs >= periodMinutes * 60_000;
+  // How the match is played is settled between periods, never mid-play, so the control is there
+  // while the clock sits at zero and gone the moment it starts.
+  const canSetUp = !bySets && !match.endedAt && periodMs === 0 && !clock.running;
   // Basketball has no draw: a level game at the final buzzer goes to another period.
-  const canGoToOvertime =
-    format.decidedBy === 'clock' &&
-    !!format.overtimeMinutes &&
-    match.endedAt !== null &&
-    total.home === total.away;
+  const canGoToOvertime = !bySets && !!overtimeMinutes && match.endedAt !== null && total.home === total.away;
 
   const score = (team: Team, delta: number) => {
     // Once the period or match is decided, stop adding points - but let -1 through, so a
@@ -145,8 +151,8 @@ export default function GameScreen() {
   const advanceLabel = (() => {
     if (bySets) return setOver ? `New ${format.label}` : null;
     if (match.endedAt) return canGoToOvertime ? 'Overtime' : null;
-    const last = match.current >= format.count - 1;
-    return last ? 'Finish' : `End ${format.label}`;
+    const last = match.current >= periods - 1;
+    return last ? 'Finish' : `End ${clockLabel(periods)}`;
   })();
 
   const advance = () => {
@@ -166,7 +172,6 @@ export default function GameScreen() {
     clock.reset();
     setPeriodStart(0);
     setAdded(0);
-    if (format.decidedBy === 'clock') setLength(format.minutes);
   };
 
   if (!sport) {
@@ -182,8 +187,10 @@ export default function GameScreen() {
     : bySets
       ? `${sport.name} · to ${format.win.to}`
       : reading.expired
-        ? `${periodName(format, match.current)} · time up`
-        : `${sport.name} · ${periodName(format, match.current)}`;
+        ? `${overtime || periods > 1 ? `${periodName(format, match.current)} · ` : ''}time up`
+        : periods > 1 || overtime
+          ? `${sport.name} · ${periodName(format, match.current)}`
+          : sport.name;
 
   return (
     // The picker overlay is a sibling of the padded content so it can cover the full screen,
@@ -272,12 +279,14 @@ export default function GameScreen() {
               <Text style={[styles.pillText, { color: c.text }]}>{advanceLabel}</Text>
             </Pressable>
           ) : null}
-          {canSetLength ? (
+          {canSetUp ? (
             <Pressable
               style={[styles.pill, styles.shortPill, CardShadow, { backgroundColor: c.card }]}
-              onPress={() => setSheet('length')}
+              onPress={() => setSheet('setup')}
               hitSlop={12}>
-              <Text style={[styles.pillText, { color: c.text }]}>{periodMinutes} MIN</Text>
+              <Text style={[styles.pillText, { color: c.text }]}>
+                {periods > 1 ? `${periods} × ${periodMinutes}′` : `${periodMinutes} MIN`}
+              </Text>
             </Pressable>
           ) : null}
           {canAddTime ? (
@@ -332,14 +341,14 @@ export default function GameScreen() {
         onClose={() => setSheet(null)}
       />
 
-      <MinutesSheet
-        visible={sheet === 'length'}
-        title={`${format.decidedBy === 'clock' ? format.label : 'Period'} length`}
-        options={format.decidedBy === 'clock' ? format.lengths : []}
-        current={periodMinutes}
-        onSelect={(minutes) => {
-          setLength(minutes);
-          setSheet(null);
+      <MatchSetup
+        visible={sheet === 'setup'}
+        periods={periods}
+        minutes={length}
+        lengths={base.decidedBy === 'clock' ? base.lengths : []}
+        onChange={(next) => {
+          setPeriods(next.periods);
+          setLength(next.minutes);
         }}
         onClose={() => setSheet(null)}
       />

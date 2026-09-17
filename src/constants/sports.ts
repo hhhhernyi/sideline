@@ -33,7 +33,6 @@ export const SPORTS: Sport[] = [
       minutes: 45,
       lengths: [20, 30, 40, 45],
       countsDown: false,
-      label: 'Half',
     },
   },
   {
@@ -52,7 +51,6 @@ export const SPORTS: Sport[] = [
       lengths: [6, 8, 10, 12],
       countsDown: true,
       overtimeMinutes: 5,
-      label: 'Quarter',
     },
   },
   {
