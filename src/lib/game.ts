@@ -26,8 +26,13 @@ export type MatchFormat =
       decidedBy: 'clock';
       /** Halves or quarters. */
       count: number;
-      /** Minutes in a period, before stoppage. */
+      /** Minutes in a period, before any added time. */
       minutes: number;
+      /**
+       * Which way the clock runs. Basketball counts down to a buzzer; football counts up and
+       * carries on through added time, so only the counting-up sports can have any.
+       */
+      countsDown: boolean;
       label: string;
     };
 

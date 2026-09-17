@@ -27,7 +27,7 @@ export const SPORTS: Sport[] = [
     icon: 'soccer',
     tint: '#D2EBDA',
     increments: [1],
-    format: { decidedBy: 'clock', count: 2, minutes: 45, label: 'Half' },
+    format: { decidedBy: 'clock', count: 2, minutes: 45, countsDown: false, label: 'Half' },
   },
   {
     id: 'basketball',
@@ -36,7 +36,7 @@ export const SPORTS: Sport[] = [
     tint: '#FBD9C4',
     increments: [1, 2, 3],
     // FIBA quarters. The NBA's 12 belongs in a per-match setting, not a second sport.
-    format: { decidedBy: 'clock', count: 4, minutes: 10, label: 'Quarter' },
+    format: { decidedBy: 'clock', count: 4, minutes: 10, countsDown: true, label: 'Quarter' },
   },
   {
     id: 'volleyball',
