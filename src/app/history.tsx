@@ -5,7 +5,7 @@ import { Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-nati
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ScreenHeader } from '@/components/screen-header';
+import { HEADER_ACTION_HEIGHT, ScreenHeader } from '@/components/screen-header';
 import { getSport } from '@/constants/sports';
 import { CardShadow, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -27,7 +27,7 @@ function formatDuration(ms: number): string {
   return n < 1 ? 'under a minute' : `${n} min`;
 }
 
-/** How far the card has to be dragged before letting go deletes it. */
+/** How far the row has to be dragged before the actions stay open. */
 const SWIPE_THRESHOLD = 40;
 
 export default function HistoryScreen() {
@@ -102,13 +102,25 @@ export default function HistoryScreen() {
                 key={match.id}
                 friction={2}
                 rightThreshold={SWIPE_THRESHOLD}
-                // Deleting on release rather than leaving the row parked open: there is one
-                // action here, so an open row would only be waiting for a second tap.
-                onSwipeableOpen={() => remove(match.id)}
-                renderRightActions={() => (
-                  <View style={[styles.swipeAction, { backgroundColor: c.away }]}>
-                    <MaterialCommunityIcons name="trash-can-outline" size={22} color="#FFFFFF" />
-                    <Text style={styles.swipeText}>Delete</Text>
+                // The row parks open rather than acting on release: two actions live back
+                // there, and a swipe cannot say which one was meant.
+                renderRightActions={(_progress, _translation, swipeable) => (
+                  <View style={styles.swipeActions}>
+                    <Pressable
+                      style={[styles.swipeAction, { backgroundColor: c.accent }]}
+                      onPress={() => {
+                        swipeable.close();
+                        share(match);
+                      }}>
+                      <MaterialCommunityIcons name="share-variant" size={20} color={c.text} />
+                      <Text style={[styles.swipeText, { color: c.text }]}>Share</Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.swipeAction, { backgroundColor: c.away }]}
+                      onPress={() => remove(match.id)}>
+                      <MaterialCommunityIcons name="trash-can-outline" size={20} color="#FFFFFF" />
+                      <Text style={[styles.swipeText, { color: '#FFFFFF' }]}>Delete</Text>
+                    </Pressable>
                   </View>
                 )}>
                 <Pressable
@@ -161,13 +173,30 @@ export default function HistoryScreen() {
                         </View>
                       ))}
 
-                      <Pressable
-                        onPress={() => share(match)}
-                        hitSlop={8}
-                        style={[styles.shareBtn, { backgroundColor: c.accent }]}>
-                        <MaterialCommunityIcons name="share-variant" size={17} color={c.text} />
-                        <Text style={[styles.shareText, { color: c.text }]}>Share</Text>
-                      </Pressable>
+                      {/* The same two actions as the swipe offers, for anyone who opened the
+                          row to read it and decided from there. */}
+                      <View style={styles.actions}>
+                        <Pressable
+                          onPress={() => share(match)}
+                          hitSlop={8}
+                          style={[styles.actionBtn, { backgroundColor: c.accent }]}>
+                          <MaterialCommunityIcons name="share-variant" size={17} color={c.text} />
+                          <Text style={[styles.actionText, { color: c.text }]}>Share</Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={() => remove(match.id)}
+                          hitSlop={8}
+                          style={[styles.actionBtn, { backgroundColor: c.background }]}>
+                          <MaterialCommunityIcons
+                            name="trash-can-outline"
+                            size={17}
+                            color={c.textSecondary}
+                          />
+                          <Text style={[styles.actionText, { color: c.textSecondary }]}>
+                            Delete
+                          </Text>
+                        </Pressable>
+                      </View>
                     </View>
                   ) : null}
                 </Pressable>
@@ -183,26 +212,26 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   backBtn: {
-    minWidth: 92,
-    height: 40,
+    minWidth: 82,
+    height: HEADER_ACTION_HEIGHT,
     paddingHorizontal: Spacing.md,
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backText: { fontSize: 16, fontWeight: '700' },
+  backText: { fontSize: 14, fontWeight: '700' },
   list: { paddingTop: Spacing.md, gap: Spacing.sm },
   empty: { fontSize: 15, fontWeight: '600', textAlign: 'center', paddingVertical: Spacing.xl },
   card: { borderRadius: 18, padding: Spacing.md, gap: Spacing.sm },
+  swipeActions: { flexDirection: 'row', gap: Spacing.sm, marginLeft: Spacing.sm },
   swipeAction: {
-    width: 104,
-    marginLeft: Spacing.sm,
+    width: 88,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.xs,
   },
-  swipeText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
+  swipeText: { fontSize: 13, fontWeight: '800' },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   icon: { width: 40, height: 40, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   headline: { flex: 1, gap: 2 },
@@ -215,14 +244,14 @@ const styles = StyleSheet.create({
   note: { gap: 2 },
   noteMeta: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
   noteText: { fontSize: 14, fontWeight: '600' },
-  shareBtn: {
+  actions: { flexDirection: 'row', gap: Spacing.sm, paddingTop: Spacing.xs },
+  actionBtn: {
     flexDirection: 'row',
-    alignSelf: 'flex-start',
     alignItems: 'center',
     gap: Spacing.xs,
     height: 38,
     paddingHorizontal: Spacing.md,
     borderRadius: 999,
   },
-  shareText: { fontSize: 14, fontWeight: '800' },
+  actionText: { fontSize: 14, fontWeight: '800' },
 });

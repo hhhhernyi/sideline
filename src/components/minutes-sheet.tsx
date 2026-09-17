@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -51,6 +52,13 @@ export function MinutesSheet({
   const keyboard = useKeyboardHeight();
   const { height: screen } = useWindowDimensions();
   const [other, setOther] = useState('');
+  const scroller = useRef<ScrollView>(null);
+
+  // The field is the last thing in the card, so scrolling to the end is what brings it into
+  // view once the numpad has taken the bottom of the screen.
+  useEffect(() => {
+    if (keyboard > 0) scroller.current?.scrollToEnd({ animated: true });
+  }, [keyboard]);
 
   if (!visible) return null;
 
@@ -74,49 +82,58 @@ export function MinutesSheet({
       <Pressable
         style={[styles.card, CardShadow, { backgroundColor: c.card, maxHeight: room }]}
         onPress={() => {}}>
-        <Text style={[styles.title, { color: c.text }]}>{title}</Text>
+        {/* Scrolls rather than spilling: with the numpad up there is not always room for the
+            whole card, and a View would simply draw its children outside the rounded box.
+            `handled` keeps a tap on an option working first time while the numpad is open. */}
+        <ScrollView
+          ref={scroller}
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled">
+          <Text style={[styles.title, { color: c.text }]}>{title}</Text>
 
-        <View style={styles.row}>
-          {options.map((minutes) => (
-            <Pressable
-              key={minutes}
-              onPress={() => onSelect(minutes)}
-              hitSlop={6}
-              style={[
-                styles.quick,
-                { backgroundColor: c.background },
-                minutes === current && { borderColor: c.text, borderWidth: 3 },
-              ]}>
-              <Text style={[styles.quickText, { color: c.text }]}>
-                {prefix}
-                {minutes}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+          <View style={styles.row}>
+            {options.map((minutes) => (
+              <Pressable
+                key={minutes}
+                onPress={() => onSelect(minutes)}
+                hitSlop={6}
+                style={[
+                  styles.quick,
+                  { backgroundColor: c.background },
+                  minutes === current && { borderColor: c.text, borderWidth: 3 },
+                ]}>
+                <Text style={[styles.quickText, { color: c.text }]}>
+                  {prefix}
+                  {minutes}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
 
-        <View style={styles.row}>
-          <TextInput
-            value={other}
-            onChangeText={(text) => setOther(text.replace(/[^0-9]/g, ''))}
-            onSubmitEditing={submitOther}
-            style={[styles.other, { backgroundColor: c.background, color: c.text }]}
-            keyboardType="number-pad"
-            maxLength={2}
-            returnKeyType="done"
-            submitBehavior="blurAndSubmit"
-            placeholder="Other"
-            placeholderTextColor={c.textSecondary}
-          />
-          {allowClear && current > 0 ? (
-            <Pressable
-              onPress={() => onSelect(0)}
-              hitSlop={6}
-              style={[styles.clear, { backgroundColor: c.background }]}>
-              <Text style={[styles.quickText, { color: c.textSecondary }]}>Clear</Text>
-            </Pressable>
-          ) : null}
-        </View>
+          <View style={styles.row}>
+            <TextInput
+              value={other}
+              onChangeText={(text) => setOther(text.replace(/[^0-9]/g, ''))}
+              onSubmitEditing={submitOther}
+              style={[styles.other, { backgroundColor: c.background, color: c.text }]}
+              keyboardType="number-pad"
+              maxLength={2}
+              returnKeyType="done"
+              submitBehavior="blurAndSubmit"
+              placeholder="Other"
+              placeholderTextColor={c.textSecondary}
+            />
+            {allowClear && current > 0 ? (
+              <Pressable
+                onPress={() => onSelect(0)}
+                hitSlop={6}
+                style={[styles.clear, { backgroundColor: c.background }]}>
+                <Text style={[styles.quickText, { color: c.textSecondary }]}>Clear</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        </ScrollView>
       </Pressable>
     </Pressable>
   );
@@ -135,7 +152,9 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
   },
   backdropLifted: { justifyContent: 'flex-start' },
-  card: { borderRadius: 24, padding: Spacing.lg, gap: Spacing.md, maxWidth: 520 },
+  card: { borderRadius: 24, padding: Spacing.lg, maxWidth: 520 },
+  scroll: { flexGrow: 0 },
+  content: { gap: Spacing.md },
   title: { fontSize: 17, fontWeight: '700', textAlign: 'center' },
   row: { flexDirection: 'row', justifyContent: 'center', gap: Spacing.sm },
   quick: { width: 64, height: 52, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },

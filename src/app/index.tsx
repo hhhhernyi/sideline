@@ -3,7 +3,7 @@ import { Link } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ScreenHeader } from '@/components/screen-header';
+import { HEADER_ACTION_HEIGHT, ScreenHeader } from '@/components/screen-header';
 import { SPORTS } from '@/constants/sports';
 import { CardShadow, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -112,11 +112,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
-    height: 40,
+    height: HEADER_ACTION_HEIGHT,
     paddingHorizontal: Spacing.md,
     borderRadius: 999,
   },
-  historyText: { fontSize: 15, fontWeight: '700' },
+  historyText: { fontSize: 14, fontWeight: '700' },
   // Pulled out of the flow so the icon stays dead centre in the card whatever the label does.
   name: {
     position: 'absolute',

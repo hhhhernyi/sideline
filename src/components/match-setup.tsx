@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -47,6 +48,13 @@ export function MatchSetup({ visible, periods, minutes, lengths, onChange, onClo
   const keyboard = useKeyboardHeight();
   const { height: screen } = useWindowDimensions();
   const [other, setOther] = useState('');
+  const scroller = useRef<ScrollView>(null);
+
+  // The field is the last thing in the card, so scrolling to the end is what brings it into
+  // view once the numpad has taken the bottom of the screen.
+  useEffect(() => {
+    if (keyboard > 0) scroller.current?.scrollToEnd({ animated: true });
+  }, [keyboard]);
 
   if (!visible) return null;
 
@@ -70,53 +78,62 @@ export function MatchSetup({ visible, periods, minutes, lengths, onChange, onClo
       <Pressable
         style={[styles.card, CardShadow, { backgroundColor: c.card, maxHeight: room }]}
         onPress={() => {}}>
-        <Text style={[styles.heading, { color: c.textSecondary }]}>Play it as</Text>
-        <View style={styles.row}>
-          {SPLITS.map((split) => (
-            <Pressable
-              key={split.periods}
-              onPress={() => onChange({ periods: split.periods, minutes })}
-              hitSlop={6}
-              style={[
-                styles.wide,
-                { backgroundColor: c.background },
-                split.periods === periods && { borderColor: c.text, borderWidth: 3 },
-              ]}>
-              <Text style={[styles.optionText, { color: c.text }]}>{split.label}</Text>
-            </Pressable>
-          ))}
-        </View>
+        {/* Scrolls rather than spilling: with the numpad up there is not always room for the
+            whole card, and a View would simply draw its children outside the rounded box.
+            `handled` keeps a tap on an option working first time while the numpad is open. */}
+        <ScrollView
+          ref={scroller}
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled">
+          <Text style={[styles.heading, { color: c.textSecondary }]}>Play it as</Text>
+          <View style={styles.row}>
+            {SPLITS.map((split) => (
+              <Pressable
+                key={split.periods}
+                onPress={() => onChange({ periods: split.periods, minutes })}
+                hitSlop={6}
+                style={[
+                  styles.wide,
+                  { backgroundColor: c.background },
+                  split.periods === periods && { borderColor: c.text, borderWidth: 3 },
+                ]}>
+                <Text style={[styles.optionText, { color: c.text }]}>{split.label}</Text>
+              </Pressable>
+            ))}
+          </View>
 
-        <Text style={[styles.heading, { color: c.textSecondary }]}>
-          {periods === 1 ? 'Match length' : `${clockLabel(periods)} length`}
-        </Text>
-        <View style={styles.row}>
-          {lengths.map((value) => (
-            <Pressable
-              key={value}
-              onPress={() => onChange({ periods, minutes: value })}
-              hitSlop={6}
-              style={[
-                styles.quick,
-                { backgroundColor: c.background },
-                value === minutes && { borderColor: c.text, borderWidth: 3 },
-              ]}>
-              <Text style={[styles.optionText, { color: c.text }]}>{value}</Text>
-            </Pressable>
-          ))}
-          <TextInput
-            value={other}
-            onChangeText={(text) => setOther(text.replace(/[^0-9]/g, ''))}
-            onSubmitEditing={submitOther}
-            style={[styles.other, { backgroundColor: c.background, color: c.text }]}
-            keyboardType="number-pad"
-            maxLength={2}
-            returnKeyType="done"
-            submitBehavior="blurAndSubmit"
-            placeholder="Other"
-            placeholderTextColor={c.textSecondary}
-          />
-        </View>
+          <Text style={[styles.heading, { color: c.textSecondary }]}>
+            {periods === 1 ? 'Match length' : `${clockLabel(periods)} length`}
+          </Text>
+          <View style={styles.row}>
+            {lengths.map((value) => (
+              <Pressable
+                key={value}
+                onPress={() => onChange({ periods, minutes: value })}
+                hitSlop={6}
+                style={[
+                  styles.quick,
+                  { backgroundColor: c.background },
+                  value === minutes && { borderColor: c.text, borderWidth: 3 },
+                ]}>
+                <Text style={[styles.optionText, { color: c.text }]}>{value}</Text>
+              </Pressable>
+            ))}
+            <TextInput
+              value={other}
+              onChangeText={(text) => setOther(text.replace(/[^0-9]/g, ''))}
+              onSubmitEditing={submitOther}
+              style={[styles.other, { backgroundColor: c.background, color: c.text }]}
+              keyboardType="number-pad"
+              maxLength={2}
+              returnKeyType="done"
+              submitBehavior="blurAndSubmit"
+              placeholder="Other"
+              placeholderTextColor={c.textSecondary}
+            />
+          </View>
+        </ScrollView>
       </Pressable>
     </Pressable>
   );
@@ -135,7 +152,9 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
   },
   backdropLifted: { justifyContent: 'flex-start' },
-  card: { borderRadius: 24, padding: Spacing.lg, gap: Spacing.sm, maxWidth: 560 },
+  card: { borderRadius: 24, padding: Spacing.lg, maxWidth: 560 },
+  scroll: { flexGrow: 0 },
+  content: { gap: Spacing.sm },
   heading: { fontSize: 13, fontWeight: '700', textAlign: 'center', letterSpacing: 0.5 },
   row: {
     flexDirection: 'row',
