@@ -38,7 +38,12 @@
           "imageWidth": 220
         }
       ],
-      "expo-audio",
+      [
+        "expo-audio",
+        {
+          "enableBackgroundPlayback": false
+        }
+      ],
       "expo-sqlite"
     ],
     "experiments": {
