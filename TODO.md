@@ -133,3 +133,18 @@ a Google Service Account JSON key set up first — worth doing once the listing 
 - [ ] Volleyball is a single game, not a match — there is no set tracking, so "to 25" is one set
       rather than best-of-five. Adding sets means bringing back something like the period state
       that was removed, so it needs a deliberate design rather than a flag.
+
+## Roadmap (in order)
+
+1. [ ] **More sports.** Not yet chosen - decide next session. Candidates that fit the existing
+   formats and are only new `SPORTS` entries in `src/constants/sports.ts`, with no new rules code:
+   - Played to a points target: table tennis (games to 11 win-by-2, best of 5), squash (to 11
+     win-by-2, best of 5), pickleball (to 11 win-by-2, best of 3; rally points only - the
+     traditional rule where only the serving side scores isn't supported).
+   - Played to the clock: futsal (2 x 20), handball (2 x 30), netball (4 x 15), field hockey
+     (4 x 15), rugby union (2 x 40, buttons 5/2/3), water polo (4 x 8, counting down).
+   - Need new rules code, held for later: tennis (deuce, advantage, tiebreaks), baseball and
+     softball (innings), cricket (overs and wickets).
+2. [ ] **Search bar** at the top of the sport picker, once the list is long enough to need it.
+3. [ ] **Favourites.** A star button that pins a sport to the top of the picker. The stars must
+   persist, so they go in the same `expo-sqlite` key-value store as match history.
