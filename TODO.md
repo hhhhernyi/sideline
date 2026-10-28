@@ -15,7 +15,9 @@ EAS and `ascAppId` is pinned in eas.json, so neither prompts for an Apple login:
 
 `autoIncrement` handles build numbers; `--latest` resolves to the newest finished build.
 
-## Release: App Store (build 7 submitted 19 Sep 2026, Waiting for Review)
+## Release: App Store (released 28 Oct 2026)
+
+**Approved and released 28 Oct 2026 as build 8, tagged `v1.0.0`.**
 
 **Rejected again on 17 Sep under Guideline 4.3(a) - Design - Spam**, after the 2.1 answer had
 cleared. That one is real and is answered in `APP_REVIEW_4_3.md`: what the rejection actually
